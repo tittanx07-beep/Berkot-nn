@@ -2,10 +2,10 @@
 
 const BERKOT_ONLINE_CONFIG = {
     // TU BIN ID DE JSONBIN.IO (solo el ID, no toda la URL)
-    BIN_ID: "TU_ID_DEL_BIN_AQUI",  // Ejemplo: "65f4a8b8dc74654018a8c4f3"
+    BIN_ID: "https://api.jsonbin.io/v3/b/698ba4da43b1c97be97508c3",  // Ejemplo: "65f4a8b8dc74654018a8c4f3"
     
     // TU ACCESS KEY
-    ACCESS_KEY: "TU_ACCESS_KEY_AQUI",
+    ACCESS_KEY: "$2a$10$ZyT2m555Top/p79kUV6U2OKumygoxSTJM8cZY.T1EvXLxx5jWJ08K",
     
     // CONTRASEÑA ADMIN
     ADMIN_PASSWORD: "Berkot2026",
