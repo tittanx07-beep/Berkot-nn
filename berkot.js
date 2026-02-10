@@ -7,7 +7,7 @@ console.log("🚀 ===== BERKOT.JS INICIADO =====");
 
 // ===== CONFIGURACIÓN =====
 const BERKOT_CONFIG = {
-    BIN_ID: "https://api.jsonbin.io/v3/b/698ba4da43b1c97be97508c3",  // REEMPLAZA CON TU ID
+    BIN_ID: "698ba4da43b1c97be97508c3",  // REEMPLAZA CON TU ID
     ACCESS_KEY: "$2a$10$ZyT2m555Top/p79kUV6U2OKumygoxSTJM8cZY.T1EvXLxx5jWJ08K",  // REEMPLAZA CON TU KEY
     ADMIN_PASS: "Berkot2026"
 };
