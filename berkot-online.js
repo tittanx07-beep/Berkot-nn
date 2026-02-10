@@ -1,317 +1,290 @@
-// ===== CONFIGURACIÓN BERKOT - CORREGIDA Y PROBADA =====
+// ========== BERKOT.JS - CON AVISOS VISIBLES ==========
 
-const BERKOT_ONLINE_CONFIG = {
-    // TU BIN ID DE JSONBIN.IO (solo el ID, no toda la URL)
-    BIN_ID: "https://api.jsonbin.io/v3/b/698ba4da43b1c97be97508c3",  // Ejemplo: "65f4a8b8dc74654018a8c4f3"
-    
-    // TU ACCESS KEY
-    ACCESS_KEY: "$2a$10$ZyT2m555Top/p79kUV6U2OKumygoxSTJM8cZY.T1EvXLxx5jWJ08K",
-    
-    // CONTRASEÑA ADMIN
-    ADMIN_PASSWORD: "Berkot2026",
-    
-    // URLs COMPLETAS
-    get BIN_URL() {
-        return `https://api.jsonbin.io/v3/b/${this.BIN_ID}`;
-    },
-    
-    get BIN_URL_LATEST() {
-        return `https://api.jsonbin.io/v3/b/${this.BIN_ID}/latest`;
-    },
-    
-    // ===== FUNCIONES PRINCIPALES =====
-    
-    // 1. CARGAR DATOS DESDE INTERNET
-    async loadOnlineData() {
-        console.log("🌐 Intentando cargar desde JSONBin.io...");
-        
-        try {
-            const response = await fetch(this.BIN_URL_LATEST, {
-                headers: {
-                    "X-Access-Key": this.ACCESS_KEY,
-                    "Content-Type": "application/json"
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Error HTTP: ${response.status}`);
-            }
-            
-            const result = await response.json();
-            console.log("✅ Datos cargados desde internet:", result.record);
-            return result.record;
-            
-        } catch (error) {
-            console.warn("⚠️ No se pudo cargar online:", error.message);
-            return null;
-        }
-    },
-    
-    // 2. GUARDAR DATOS EN INTERNET
-    async saveOnlineData(data) {
-        console.log("💾 Guardando en JSONBin.io...");
-        
-        try {
-            const response = await fetch(this.BIN_URL, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-Access-Key": this.ACCESS_KEY,
-                    "X-Bin-Versioning": "false"
-                },
-                body: JSON.stringify(data)
-            });
-            
-            if (response.ok) {
-                console.log("✅ Guardado exitoso en la nube");
-                return true;
-            } else {
-                throw new Error(`Error guardando: ${response.status}`);
-            }
-            
-        } catch (error) {
-            console.error("❌ Error guardando:", error);
-            return false;
-        }
-    },
-    
-    // 3. SINCRONIZAR CON TU PÁGINA
-    async syncWithPage() {
-        console.log("🔄 Sincronizando página con datos online...");
-        
-        // A. Cargar datos de internet
-        const onlineData = await this.loadOnlineData();
-        
-        if (!onlineData) {
-            console.log("🔄 Usando datos locales como respaldo");
-            return false;
-        }
-        
-        // B. Verificar que window.storeData existe
-        if (!window.storeData) {
-            console.error("❌ No se encontró storeData en la página");
-            return false;
-        }
-        
-        // C. ACTUALIZAR LOS PRECIOS EN TU PÁGINA
-        if (onlineData.products && Array.isArray(onlineData.products)) {
-            // Actualizar cada producto
-            onlineData.products.forEach(onlineProduct => {
-                const localProduct = window.storeData.products?.find(p => p.id === onlineProduct.id);
-                if (localProduct) {
-                    // ACTUALIZAR PRECIO
-                    localProduct.basePrice = onlineProduct.basePrice;
-                    console.log(`📊 Actualizado: ${localProduct.name} = $${onlineProduct.basePrice}`);
-                }
-            });
-            
-            // D. ACTUALIZAR INTERFAZ
-            if (window.applyStoreData) {
-                window.applyStoreData();
-            }
-            if (window.renderProducts) {
-                window.renderProducts();
-            }
-            
-            // E. Guardar localmente
-            localStorage.setItem('berkot_last_online_sync', JSON.stringify(onlineData));
-            localStorage.setItem('berkot_sync_time', new Date().toISOString());
-            
-            console.log("✅ Sincronización completa");
-            return true;
-        }
-        
-        return false;
-    }
+// 🎯 AVISO 1: ARCHIVO CARGADO
+alert("✅ berkot.js se cargó CORRECTAMENTE");
+
+console.log("🚀 ===== BERKOT.JS INICIADO =====");
+
+// ===== CONFIGURACIÓN =====
+const BERKOT_CONFIG = {
+    BIN_ID: "https://api.jsonbin.io/v3/b/698ba4da43b1c97be97508c3",  // REEMPLAZA CON TU ID
+    ACCESS_KEY: "$2a$10$ZyT2m555Top/p79kUV6U2OKumygoxSTJM8cZY.T1EvXLxx5jWJ08K",  // REEMPLAZA CON TU KEY
+    ADMIN_PASS: "Berkot2026"
 };
 
-// ===== INTEGRACIÓN AUTOMÁTICA =====
-
-// 1. SINCRONIZAR AL CARGAR LA PÁGINA
-async function initializeOnlineSync() {
-    console.log("🚀 Iniciando sincronización Berkot...");
-    
-    // Esperar a que la página cargue completamente
-    if (!window.storeData) {
-        setTimeout(initializeOnlineSync, 500);
-        return;
-    }
-    
-    // Intentar sincronizar
-    const success = await BERKOT_ONLINE_CONFIG.syncWithPage();
-    
-    if (success) {
-        showSyncStatus("✅ Conectado - Precios actualizados", "success");
-    } else {
-        showSyncStatus("📱 Modo local - Sin conexión", "warning");
-    }
-    
-    // Programar sincronización automática cada 2 minutos
-    setInterval(async () => {
-        await BERKOT_ONLINE_CONFIG.syncWithPage();
-    }, 120000); // 120 segundos = 2 minutos
-}
-
-// 2. AÑADIR BOTÓN DE SINCRONIZACIÓN MANUAL
-function addSyncButton() {
-    // Esperar a que exista el panel admin
-    const checkInterval = setInterval(() => {
-        const adminPanel = document.getElementById('adminPanel');
-        if (adminPanel) {
-            clearInterval(checkInterval);
-            
-            // Crear botón de sincronización
-            const syncButton = document.createElement('button');
-            syncButton.className = 'admin-btn';
-            syncButton.style.background = 'linear-gradient(135deg, #9b59b6, #8e44ad)';
-            syncButton.style.margin = '5px';
-            syncButton.innerHTML = '<i class="fas fa-sync-alt"></i> Sincronizar Ahora';
-            
-            syncButton.onclick = async function() {
-                syncButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sincronizando...';
-                syncButton.disabled = true;
-                
-                const success = await BERKOT_ONLINE_CONFIG.syncWithPage();
-                
-                if (success) {
-                    alert('✅ Precios sincronizados en todos los dispositivos');
-                    syncButton.innerHTML = '<i class="fas fa-check"></i> Sincronizado';
-                    setTimeout(() => {
-                        syncButton.innerHTML = '<i class="fas fa-sync-alt"></i> Sincronizar Ahora';
-                        syncButton.disabled = false;
-                    }, 2000);
-                } else {
-                    alert('❌ Error sincronizando. Verifica conexión.');
-                    syncButton.innerHTML = '<i class="fas fa-sync-alt"></i> Sincronizar Ahora';
-                    syncButton.disabled = false;
-                }
-            };
-            
-            // Añadir al panel admin
-            const lastSection = adminPanel.querySelector('.admin-section:last-child');
-            if (lastSection) {
-                lastSection.appendChild(syncButton);
-            }
-        }
-    }, 1000);
-}
-
-// 3. MODIFICAR TU FUNCIÓN saveStoreData PARA GUARDAR EN LA NUBE
-function patchSaveStoreData() {
-    if (!window.saveStoreData) return;
-    
-    // Guardar referencia original
-    const originalSaveStoreData = window.saveStoreData;
-    
-    // Sobreescribir función
-    window.saveStoreData = async function() {
-        // 1. Guardar localmente (comportamiento original)
-        originalSaveStoreData.call(this);
-        
-        // 2. Si es admin, guardar también en la nube
-        if (window.adminSessionActive) {
-            const password = prompt("📱 Contraseña para guardar en la nube:");
-            if (password === BERKOT_ONLINE_CONFIG.ADMIN_PASSWORD) {
-                const saving = document.createElement('div');
-                saving.innerHTML = '<i class="fas fa-cloud-upload-alt fa-spin"></i> Subiendo a la nube...';
-                saving.style.cssText = 'position:fixed; top:20px; right:20px; background:#3498db; color:white; padding:10px; border-radius:5px; z-index:99999;';
-                document.body.appendChild(saving);
-                
-                const success = await BERKOT_ONLINE_CONFIG.saveOnlineData(window.storeData);
-                
-                setTimeout(() => saving.remove(), 3000);
-                
-                if (success) {
-                    alert('✅ ¡Precios actualizados para TODOS los clientes!\n\nLos cambios se verán en otros dispositivos en 1-2 minutos.');
-                } else {
-                    alert('❌ Error subiendo a la nube. Los cambios solo se guardaron localmente.');
-                }
-            } else {
-                alert('❌ Contraseña incorrecta. Cambios guardados solo localmente.');
-            }
-        }
-    };
-}
-
-// 4. MOSTRAR ESTADO DE CONEXIÓN
-function showSyncStatus(message, type = 'info') {
-    // Eliminar notificación anterior
-    const oldStatus = document.getElementById('berkotSyncStatus');
-    if (oldStatus) oldStatus.remove();
-    
-    // Crear nueva notificación
-    const status = document.createElement('div');
-    status.id = 'berkotSyncStatus';
-    status.style.cssText = `
+// ===== AVISO VISIBLE EN PÁGINA =====
+function mostrarAviso(texto, tipo = 'info') {
+    const aviso = document.createElement('div');
+    aviso.id = 'berkot-aviso-' + Date.now();
+    aviso.style.cssText = `
         position: fixed;
-        bottom: 20px;
-        left: 20px;
-        background: ${type === 'success' ? '#27ae60' : type === 'warning' ? '#f39c12' : '#3498db'};
+        top: 20px;
+        right: 20px;
+        background: ${tipo === 'success' ? '#27ae60' : tipo === 'error' ? '#e74c3c' : '#3498db'};
         color: white;
-        padding: 10px 15px;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        z-index: 9998;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-        animation: slideIn 0.3s ease;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        z-index: 99999;
+        font-family: Arial, sans-serif;
+        font-weight: bold;
+        animation: slideIn 0.5s ease;
+        max-width: 300px;
     `;
     
-    status.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'cloud'}"></i>
-        ${message}
+    aviso.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-${tipo === 'success' ? 'check-circle' : tipo === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+            <div>${texto}</div>
+        </div>
     `;
     
-    document.body.appendChild(status);
+    document.body.appendChild(aviso);
     
-    // Ocultar después de 5 segundos
+    // Auto-eliminar después de 5 segundos
     setTimeout(() => {
-        status.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => status.remove(), 300);
+        aviso.style.animation = 'slideOut 0.5s ease';
+        setTimeout(() => aviso.remove(), 500);
     }, 5000);
 }
 
-// 5. AÑADIR ANIMACIONES CSS
-const style = document.createElement('style');
-style.textContent = `
+// ===== ANIMACIONES CSS =====
+const estilos = document.createElement('style');
+estilos.textContent = `
     @keyframes slideIn {
-        from { transform: translateX(-100%); opacity: 0; }
+        from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
     }
     @keyframes slideOut {
         from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(-100%); opacity: 0; }
+        to { transform: translateX(100%); opacity: 0; }
     }
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    .fa-spin {
-        animation: spin 1s linear infinite;
+    @keyframes parpadeo {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
     }
 `;
-document.head.appendChild(style);
+document.head.appendChild(estilos);
 
-// ===== INICIALIZAR TODO =====
+// ===== BOTÓN DE ESTADO =====
+function crearBotonEstado() {
+    const boton = document.createElement('button');
+    boton.id = 'berkot-estado-btn';
+    boton.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        background: #2c3e50;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 20px;
+        font-size: 12px;
+        cursor: pointer;
+        z-index: 9999;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        animation: parpadeo 2s infinite;
+    `;
+    
+    boton.innerHTML = `
+        <i class="fas fa-sync-alt"></i> Berkot Online
+        <span id="berkot-estado" style="margin-left: 5px; color: #2ecc71;">●</span>
+    `;
+    
+    boton.onclick = function() {
+        verificarEstado();
+    };
+    
+    document.body.appendChild(boton);
+    
+    // Actualizar estado cada 30 segundos
+    setInterval(actualizarEstado, 30000);
+}
+
+// ===== VERIFICAR ESTADO =====
+async function verificarEstado() {
+    mostrarAviso('🔍 Verificando conexión con JSONBin...', 'info');
+    
+    try {
+        const url = `https://api.jsonbin.io/v3/b/${BERKOT_CONFIG.BIN_ID}/latest`;
+        const respuesta = await fetch(url, {
+            headers: { "X-Access-Key": BERKOT_CONFIG.ACCESS_KEY }
+        });
+        
+        if (respuesta.ok) {
+            mostrarAviso('✅ Conectado a JSONBin.io', 'success');
+            document.getElementById('berkot-estado').style.color = '#2ecc71';
+            return true;
+        } else {
+            mostrarAviso('⚠️ Error de conexión', 'error');
+            document.getElementById('berkot-estado').style.color = '#e74c3c';
+            return false;
+        }
+    } catch (error) {
+        mostrarAviso('❌ Sin conexión a internet', 'error');
+        document.getElementById('berkot-estado').style.color = '#e74c3c';
+        return false;
+    }
+}
+
+function actualizarEstado() {
+    verificarEstado().then(conectado => {
+        const estado = document.getElementById('berkot-estado');
+        if (estado) {
+            estado.style.color = conectado ? '#2ecc71' : '#e74c3c';
+            estado.title = conectado ? 'Conectado' : 'Desconectado';
+        }
+    });
+}
+
+// ===== SINCRONIZAR PRECIOS =====
+async function sincronizarPrecios() {
+    mostrarAviso('🔄 Sincronizando precios...', 'info');
+    console.log("Sincronizando precios...");
+    
+    // Esperar a que storeData exista
+    if (!window.storeData) {
+        setTimeout(sincronizarPrecios, 1000);
+        return;
+    }
+    
+    try {
+        const url = `https://api.jsonbin.io/v3/b/${BERKOT_CONFIG.BIN_ID}/latest`;
+        const respuesta = await fetch(url, {
+            headers: { "X-Access-Key": BERKOT_CONFIG.ACCESS_KEY }
+        });
+        
+        if (!respuesta.ok) throw new Error("Error " + respuesta.status);
+        
+        const datos = await respuesta.json();
+        console.log("Datos recibidos:", datos.record);
+        
+        // Actualizar precios
+        if (datos.record && datos.record.products) {
+            let actualizados = 0;
+            
+            datos.record.products.forEach(productoOnline => {
+                const productoLocal = window.storeData.products?.find(p => p.id === productoOnline.id);
+                if (productoLocal && productoLocal.basePrice !== productoOnline.basePrice) {
+                    productoLocal.basePrice = productoOnline.basePrice;
+                    actualizados++;
+                    console.log(`Actualizado: ${productoLocal.name} = $${productoOnline.basePrice}`);
+                }
+            });
+            
+            // Refrescar página
+            if (actualizados > 0) {
+                if (window.applyStoreData) window.applyStoreData();
+                if (window.renderProducts) window.renderProducts();
+                mostrarAviso(`✅ ${actualizados} precios actualizados`, 'success');
+            } else {
+                mostrarAviso('📊 Precios ya están actualizados', 'info');
+            }
+        }
+    } catch (error) {
+        console.warn("Error sincronizando:", error);
+        mostrarAviso('⚠️ Error sincronizando precios', 'error');
+    }
+}
+
+// ===== GUARDAR EN LA NUBE =====
+async function guardarEnLaNube() {
+    const password = prompt("🔐 Contraseña admin para guardar en la nube:");
+    if (password !== BERKOT_CONFIG.ADMIN_PASS) {
+        alert("❌ Contraseña incorrecta");
+        return false;
+    }
+    
+    mostrarAviso('☁️ Subiendo precios a la nube...', 'info');
+    
+    try {
+        const url = `https://api.jsonbin.io/v3/b/${BERKOT_CONFIG.BIN_ID}`;
+        const respuesta = await fetch(url, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "X-Access-Key": BERKOT_CONFIG.ACCESS_KEY
+            },
+            body: JSON.stringify(window.storeData)
+        });
+        
+        if (respuesta.ok) {
+            mostrarAviso('✅ Precios guardados para TODOS los clientes!', 'success');
+            return true;
+        } else {
+            throw new Error("Error " + respuesta.status);
+        }
+    } catch (error) {
+        mostrarAviso('❌ Error: ' + error.message, 'error');
+        return false;
+    }
+}
+
+// ===== AÑADIR BOTÓN AL PANEL ADMIN =====
+function añadirBotonNube() {
+    const buscarPanel = setInterval(() => {
+        const panelAdmin = document.getElementById('adminPanel');
+        if (panelAdmin) {
+            clearInterval(buscarPanel);
+            
+            const botonNube = document.createElement('button');
+            botonNube.className = 'admin-btn';
+            botonNube.style.background = 'linear-gradient(135deg, #9b59b6, #8e44ad)';
+            botonNube.style.margin = '10px 0';
+            botonNube.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> GUARDAR EN LA NUBE';
+            
+            botonNube.onclick = guardarEnLaNube;
+            
+            panelAdmin.appendChild(botonNube);
+            console.log("✅ Botón 'Guardar en la nube' añadido");
+        }
+    }, 1000);
+}
+
+// ===== INICIALIZAR =====
+function iniciarBerkotOnline() {
+    console.log("🚀 Iniciando Berkot Online...");
+    
+    // 1. Crear botón de estado
+    crearBotonEstado();
+    
+    // 2. Verificar conexión
+    setTimeout(verificarEstado, 2000);
+    
+    // 3. Sincronizar precios
+    setTimeout(sincronizarPrecios, 3000);
+    
+    // 4. Añadir botón al panel admin
+    setTimeout(añadirBotonNube, 5000);
+    
+    // 5. Sincronizar automáticamente cada 2 minutos
+    setInterval(sincronizarPrecios, 120000);
+    
+    // Hacer funciones disponibles globalmente
+    window.BERKOT_CONFIG = BERKOT_CONFIG;
+    window.sincronizarPrecios = sincronizarPrecios;
+    window.guardarEnLaNube = guardarEnLaNube;
+    
+    console.log("✅ Berkot Online inicializado");
+}
+
+// ===== EJECUTAR =====
+
+// AVISO 2: INICIANDO
+console.log("🔄 Iniciando Berkot Online...");
 
 // Esperar a que la página cargue
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
-        // 1. Iniciar sincronización
-        setTimeout(initializeOnlineSync, 1000);
-        
-        // 2. Añadir botón sync
-        setTimeout(addSyncButton, 2000);
-        
-        // 3. Parchear función de guardado
-        setTimeout(patchSaveStoreData, 3000);
+        // AVISO 3: PÁGINA CARGADA
+        console.log("📄 Página cargada, iniciando...");
+        setTimeout(iniciarBerkotOnline, 1000);
     });
 } else {
-    // La página ya está cargada
-    setTimeout(initializeOnlineSync, 1000);
-    setTimeout(addSyncButton, 2000);
-    setTimeout(patchSaveStoreData, 3000);
+    // AVISO 4: YA CARGADA
+    console.log("⚡ Página ya cargada, iniciando inmediatamente...");
+    setTimeout(iniciarBerkotOnline, 1000);
 }
 
-// ===== HACER DISPONIBLE GLOBALMENTE =====
-window.BERKOT_ONLINE_CONFIG = BERKOT_ONLINE_CONFIG;
-window.initializeOnlineSync = initializeOnlineSync;
+// AVISO 5: FINAL
+console.log("🎯 Berkot.js cargado y listo");
