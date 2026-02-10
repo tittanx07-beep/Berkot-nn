@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Berkot - Tu Tienda de Confianza</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6A5ACD;
+            --secondary: #20B2AA;
+            --accent: #FF7F50;
+            --light: #F8F9FA;
+            --dark: #2C3E50;
+            --success: #27AE60;
+            --warning: #F39C12;
+            --danger: #E74C3C;
+            --shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+            --cuban-blue: #002A8F;
+            --cuban-red: #CF142B;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* === PANEL DE ADMINISTRACIÓN === */
+        .admin-panel {
+            position: fixed;
+            top: -100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 95%;
+            max-width: 900px;
+            background: white;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            z-index: 9999;
+            transition: top 0.5s ease;
+            padding: 2rem;
+            overflow-y: auto;
+            max-height: 90vh;
+        }
+        
+        .admin-panel.active {
+            top: 0;
+        }
+        
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        .admin-title {
+            color: var(--primary);
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .close-admin {
+            background: var(--danger);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .close-admin:hover {
+            transform: rotate(90deg);
+        }
+        
+        .admin-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--light);
+            border-radius: 15px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .section-title {
+            color: var(--secondary);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .admin-input-group {
+            margin-bottom: 1rem;
+        }
+        
+        .admin-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark);
+            font-size: 0.9rem;
+        }
+        
+        .admin-input, .admin-select, .admin-textarea {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            background: white;
+        }
+        
+        .admin-input:focus, .admin-select:focus, .admin-textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(106, 90, 205, 0.1);
+        }
+        
+        .admin-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .admin-btn {
+            padding: 0.8rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+        
+        .admin-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(106, 90, 205, 0.3);
+        }
+        
+        .admin-btn-save {
+            background: linear-gradient(135deg, var(--success), #2ecc71);
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .admin-btn-change-pass {
+            background: linear-gradient(135deg, var(--warning), #e67e22);
+            margin-top: 1rem;
+        }
+        
+        /* === BOTÓN SECRETO ADMIN === */
+        .admin-toggle {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--dark), #34495e);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 9998;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: var(--transition);
+            opacity: 0.3;
+            font-size: 1.2rem;
+        }
+        
+        .admin-toggle:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        
+        /* === LOGIN ADMIN === */
+        .admin-login {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .admin-login.active {
+            display: flex;
+        }
+        
+        .login-box {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            animation: fadeInUp 0.5s ease;
+        }
+        
+        .login-title {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+        
+        .login-input {
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(106, 90, 205, 0.3);
+        }
+        
+        .login-error {
+            color: var(--danger);
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            display: none;
+        }
+        
+        .session-timeout {
+            color: var(--warning);
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+        
+        /* === BANDERA CUBANA DECORATIVA === */
+        .cuban-flag {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 25px;
+            background: linear-gradient(to bottom, 
+                #002A8F 33%, 
+                white 33%, 
+                white 66%, 
+                #CF142B 66%);
+            border-radius: 3px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1;
+        }
+        
+        /* === HEADER PRINCIPAL === */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+            animation: fadeInUp 0.8s ease;
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .berkot-logo-custom {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+        }
+        
+        /* === SECCIÓN LOGO PRINCIPAL === */
+        .main-logo-section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(-45deg, #6A5ACD, #20B2AA, #FF7F50, #6A5ACD);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            position: relative;
+            overflow: hidden;
+            padding: 2rem;
+        }
+        
+        .main-logo-section::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: float 20s linear infinite;
+        }
+        
+        .berkot-logo-main {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 8rem;
+            font-weight: 900;
+            color: white;
+            text-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            margin-bottom: 1rem;
+            animation: fadeInUp 1s ease 0.3s both;
+            letter-spacing: 3px;
+            position: relative;
+            z-index: 2;
+            background: linear-gradient(to bottom, #ffffff, #e6e6e6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            padding: 0 1rem;
+        }
+        
+        .logo-subtitle {
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2rem;
+            animation: fadeInUp 1s ease 0.6s both;
+            font-weight: 300;
+            z-index: 2;
+            position: relative;
+        }
+        
+        .tagline {
+            font-size: 1.2rem;
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            animation: fadeInUp 1s ease 0.9s both, pulse 2s infinite 2s;
+            z-index: 2;
+            position: relative;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .hours-info {
+            margin-top: 2rem;
+            padding: 1rem 2rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            animation: fadeInUp 1s ease 1.2s both;
+        }
+        
+        /* === BOTÓN WHATSAPP FLOTANTE === */
+        .contact-floating {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 9997;
+            animation: fadeInUp 1s ease 1.5s both;
+        }
+        
+        .whatsapp-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(37, 211, 102, 0.3);
+            transition: var(--transition);
+        }
+        
+        .whatsapp-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(37, 211, 102, 0.4);
+        }
+        
+        .whatsapp-btn i {
+            font-size: 1.5rem;
+        }
+        
+        /* === CATÁLOGO DE PRODUCTOS === */
+        .catalog-section {
+            padding: 5rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+        }
+        
+        .catalog-title {
+            text-align: center;
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        
+        .catalog-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border-radius: 2px;
+        }
+        
+        .catalog-subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+        
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .product-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            animation: fadeInUp 0.6s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .product-image {
+            height: 200px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 4rem;
+            position: relative;
+        }
+        
+        .product-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--accent);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .product-info {
+            padding: 1.5rem;
+        }
+        
+        .product-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+        
+        .product-description {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            min-height: 40px;
+        }
+        
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 1rem 0;
+        }
+        
+        .quantity-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            background: white;
+            color: var(--primary);
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .quantity-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .quantity-display {
+            font-size: 1.2rem;
+            font-weight: 600;
+            min-width: 60px;
+            text-align: center;
+            padding: 0.5rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+        }
+        
+        .unit-selector {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            margin-top: 0.5rem;
+            background: white;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .unit-selector:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(106, 90, 205, 0.1);
+        }
+        
+        .product-price {
+            color: var(--accent);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .old-price {
+            text-decoration: line-through;
+            color: #999;
+            font-size: 1rem;
+            font-weight: normal;
+        }
+        
+        .unit-price {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+        
+        .add-to-cart {
+            width: 100%;
+            padding: 0.8rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .add-to-cart:hover {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            transform: scale(1.05);
+        }
+        
+        /* === FORMULARIO CLIENTE === */
+        .customer-form {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            max-width: 800px;
+            margin: 2rem auto;
+            animation: fadeInUp 0.6s ease;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(106, 90, 205, 0.1);
+        }
+        
+        /* === CARRITO DE COMPRAS === */
+        .cart-section {
+            padding: 5rem 2rem;
+            background: var(--light);
+        }
+        
+        .cart-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+        }
+        
+        /* === FOOTER === */
+        .footer {
+            background: var(--dark);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+            position: relative;
+        }
+        
+        .phone-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--secondary);
+            margin: 1rem 0;
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        .business-hours {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 15px;
+            display: inline-block;
+            margin-top: 1rem;
+            max-width: 500px;
+        }
+        
+        /* === NOTIFICACIONES === */
+        .notification {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            padding: 15px 25px;
+            background: var(--success);
+            color: white;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            z-index: 10000;
+            animation: fadeInUp 0.3s ease;
+            font-weight: 500;
+            max-width: 400px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .notification.warning {
+            background: var(--warning);
+        }
+        
+        .notification.error {
+            background: var(--danger);
+        }
+        
+        /* === RESPONSIVE === */
+        @media (max-width: 768px) {
+            .berkot-logo-main { font-size: 4rem; }
+            .berkot-logo-custom { font-size: 1.8rem; }
+            .products-grid { grid-template-columns: 1fr; }
+            .contact-floating { bottom: 1rem; right: 1rem; }
+            .whatsapp-btn span { display: none; }
+            .whatsapp-btn { padding: 1rem; border-radius: 50%; }
+            .customer-form { padding: 1.5rem; }
+            .admin-toggle { bottom: 140px; right: 20px; }
+            .admin-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- === PANEL DE LOGIN ADMIN === -->
+    <div class="admin-login" id="adminLogin">
+        <div class="login-box">
+            <div class="cuban-flag"></div>
+            <h2 class="login-title"><i class="fas fa-lock"></i> Acceso Administrador</h2>
+            <input type="password" class="login-input" id="adminPassword" placeholder="Ingresa la contraseña" autocomplete="off">
+            <button class="login-btn" onclick="checkAdminPassword()">
+                <i class="fas fa-sign-in-alt"></i> Acceder
+            </button>
+            <div class="login-error" id="loginError">
+                <i class="fas fa-exclamation-circle"></i> Contraseña incorrecta
+            </div>
+            <div class="session-timeout" id="sessionTimeout">
+                Sesión activa por 60 minutos
+            </div>
+            <p style="margin-top: 1rem; font-size: 0.9rem; color: #666;">
+                Contraseña actual: <strong>Berkot2026</strong>
+            </p>
+        </div>
+    </div>
+
+    <!-- === PANEL DE ADMINISTRACIÓN === -->
+    <div class="admin-panel" id="adminPanel">
+        <div class="admin-header">
+            <h2 class="admin-title">
+                <i class="fas fa-cogs"></i> Panel de Control - Berkot
+            </h2>
+            <button class="close-admin" onclick="closeAdminPanel()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- SECCIÓN CONFIGURACIÓN GENERAL -->
+        <div class="admin-section">
+            <h3 class="section-title">
+                <i class="fas fa-store"></i> Configuración de la Tienda
+            </h3>
+            <div class="admin-grid">
+                <div class="admin-input-group">
+                    <label class="admin-label">Nombre de la Tienda</label>
+                    <input type="text" class="admin-input" id="storeName" value="Berkot">
+                </div>
+                <div class="admin-input-group">
+                    <label class="admin-label">Teléfono del Dueño</label>
+                    <input type="text" class="admin-input" id="storePhone" value="+5356603249">
+                </div>
+                <div class="admin-input-group">
+                    <label class="admin-label">Horarios de Atención</label>
+                    <input type="text" class="admin-input" id="storeHours" value="8:00 AM - 6:00 PM">
+                </div>
+                <div class="admin-input-group">
+                    <label class="admin-label">Mensaje de Bienvenida</label>
+                    <input type="text" class="admin-input" id="welcomeMessage" value="Tu tienda de confianza • Pedidos a domicilio">
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN GESTIÓN DE PRODUCTOS -->
+        <div class="admin-section">
+            <h3 class="section-title">
+                <i class="fas fa-boxes"></i> Gestión de Productos
+            </h3>
+            <div id="productsAdminList">
+                <!-- Los productos se cargarán aquí dinámicamente -->
+            </div>
+            <button class="admin-btn" onclick="addNewProduct()" style="margin-top: 1rem;">
+                <i class="fas fa-plus"></i> Añadir Nuevo Producto
+            </button>
+        </div>
+
+        <!-- SECCIÓN SEGURIDAD -->
+        <div class="admin-section">
+            <h3 class="section-title">
+                <i class="fas fa-shield-alt"></i> Seguridad y Contraseña
+            </h3>
+            <div class="admin-input-group">
+                <label class="admin-label">Cambiar Contraseña de Admin</label>
+                <input type="password" class="admin-input" id="newPassword" placeholder="Nueva contraseña">
+                <input type="password" class="admin-input" id="confirmPassword" placeholder="Confirmar contraseña" style="margin-top: 0.5rem;">
+                <button class="admin-btn admin-btn-change-pass" onclick="changeAdminPassword()">
+                    <i class="fas fa-key"></i> Cambiar Contraseña
+                </button>
+            </div>
+            <p style="font-size: 0.8rem; color: #666; margin-top: 0.5rem;">
+                Contraseña actual: <strong id="currentPasswordDisplay">Berkot2026</strong>
+            </p>
+        </div>
+
+        <!-- BOTONES DE ACCIÓN -->
+        <div class="admin-section">
+            <button class="admin-btn admin-btn-save" onclick="saveAllChanges()">
+                <i class="fas fa-save"></i> Guardar Todos los Cambios
+            </button>
+            <button class="admin-btn" onclick="resetToDefaults()" style="margin-top: 0.5rem; background: var(--danger);">
+                <i class="fas fa-undo"></i> Restaurar Valores por Defecto
+            </button>
+        </div>
+    </div>
+
+    <!-- === BOTÓN SECRETO PARA ADMIN === -->
+    <div class="admin-toggle" id="adminToggle" title="Panel de Administración">
+        <i class="fas fa-user-shield"></i>
+    </div>
+
+    <!-- === HEADER PRINCIPAL === -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-container">
+                <i class="fas fa-store" style="font-size: 2rem; color: var(--primary);"></i>
+                <div class="berkot-logo-custom" id="headerStoreName">BERKOT</div>
+            </div>
+            <nav>
+                <a href="#catalogo" style="color: var(--dark); text-decoration: none; margin-left: 2rem; font-weight: 500;">Productos</a>
+                <a href="#pedidos" style="color: var(--dark); text-decoration: none; margin-left: 2rem; font-weight: 500;">Cómo Pedir</a>
+                <a href="#contacto" style="color: var(--dark); text-decoration: none; margin-left: 2rem; font-weight: 500;">Contacto</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- === LOGO PRINCIPAL === -->
+    <section class="main-logo-section">
+        <div class="logo-content">
+            <h1 class="berkot-logo-main" id="mainStoreName">BERKOT</h1>
+            <p class="logo-subtitle" id="mainSubtitle">Tu tienda de confianza • Pedidos a domicilio</p>
+            <div class="tagline">
+                <i class="fas fa-balance-scale"></i> Elige la cantidad exacta que necesitas
+            </div>
+            <div class="hours-info">
+                <p><i class="fas fa-clock"></i> Horario: <strong id="displayHours">8:00 AM - 6:00 PM</strong></p>
+                <p><i class="fas fa-calendar-alt"></i> Lunes a Domingo</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- === CATÁLOGO DE PRODUCTOS === -->
+    <section id="catalogo" class="catalog-section">
+        <h2 class="catalog-title">Elige tu Cantidad</h2>
+        <p class="catalog-subtitle">Selecciona la cantidad exacta y unidad de medida que necesitas</p>
+        
+        <div class="products-grid" id="productsContainer">
+            <!-- Los productos se cargarán aquí dinámicamente -->
+        </div>
+    </section>
+
+    <!-- === FORMULARIO DEL CLIENTE === -->
+    <section class="customer-form">
+        <h2 style="color: var(--primary); margin-bottom: 1.5rem; font-size: 1.8rem;">
+            <i class="fas fa-user-circle"></i> Información para tu Pedido
+        </h2>
+        
+        <div class="form-group">
+            <label class="form-label">Nombre Completo *</label>
+            <input type="text" id="customer-name" class="form-input" placeholder="Ej: Juan Pérez" required>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Número de Teléfono *</label>
+            <input type="tel" id="customer-phone" class="form-input" placeholder="Ej: +53555123456" required>
+            <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">
+                Te notificaremos por WhatsApp cuando tu pedido sea aceptado
+            </p>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Dirección de Entrega *</label>
+            <input type="text" id="customer-address" class="form-input" placeholder="Calle, número, entre calles, municipio" required>
+        </div>
+        
+        <button onclick="saveCustomerInfo()" style="width: 100%; padding: 1rem; background: linear-gradient(135deg, var(--secondary), var(--primary)); color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 1.1rem; cursor: pointer; margin-top: 1rem;">
+            <i class="fas fa-save"></i> Guardar Información
+        </button>
+    </section>
+
+    <!-- === CARRITO DE COMPRAS === -->
+    <section id="pedidos" class="cart-section">
+        <div class="cart-container">
+            <h2 class="catalog-title">Tu Pedido</h2>
+            
+            <div id="customer-info-summary" style="background: var(--light); padding: 1.5rem; border-radius: 15px; margin-bottom: 2rem; display: none;">
+                <h3 style="color: var(--primary); margin-bottom: 1rem;">
+                    <i class="fas fa-user-check"></i> Información del Cliente
+                </h3>
+                <div id="customer-details"></div>
+            </div>
+            
+            <div id="cart-items">
+                <p id="empty-cart-message">Tu carrito está vacío. Agrega productos para comenzar.</p>
+            </div>
+            
+            <div id="cart-total" style="text-align: right; margin-top: 2rem; font-size: 1.5rem; font-weight: 600; color: var(--primary);">
+                Total: $<span id="total-amount">0.00</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- === BOTÓN WHATSAPP FLOTANTE === -->
+    <div class="contact-floating">
+        <a id="whatsapp-link" href="#" class="whatsapp-btn" onclick="sendOrder()">
+            <i class="fab fa-whatsapp"></i>
+            <span>Pedir por WhatsApp</span>
+        </a>
+    </div>
+
+    <!-- === FOOTER === -->
+    <footer id="contacto" class="footer">
+        <div class="footer-content">
+            <h2 style="font-size: 2rem; margin-bottom: 1rem;">Contacta con <span id="footerStoreName">Berkot</span></h2>
+            
+            <div class="business-hours">
+                <h3 style="color: var(--secondary); margin-bottom: 1rem;">
+                    <i class="fas fa-clock"></i> Horarios de Atención
+                </h3>
+                <p style="font-size: 1.2rem; margin-bottom: 0.5rem;" id="footerHours">🕗 8:00 AM - 6:00 PM</p>
+                <p>Lunes a Domingo • Abrimos todos los días</p>
+            </div>
+            
+            <div style="margin-top: 2rem;">
+                <p><i class="fas fa-phone-alt"></i> Para consultas y pedidos:</p>
+                <div class="phone-number">
+                    <i class="fab fa-whatsapp"></i> <span id="footerPhone">+53 5660 3249</span>
+                </div>
+            </div>
+            
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                <p>&copy; 2024 <span id="copyrightName">Berkot</span>. Todos los derechos reservados.</p>
+                <p style="font-size: 0.9rem; opacity: 0.8; margin-top: 0.5rem;">
+                    <i class="fas fa-heart" style="color: var(--cuban-red);"></i> Hecho en Cuba con ❤️
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ========== CONFIGURACIÓN PRINCIPAL ==========
+        const ADMIN_CONFIG = {
+            PASSWORD: "Berkot2026",
+            SESSION_KEY: "berkot_admin_session",
+            TIMEOUT: 60, // minutos
+            STORE_DATA_KEY: "berkot_store_data"
+        };
+
+        // ========== BASE DE DATOS INICIAL ==========
+        let storeData = {
+            storeName: "Berkot",
+            storePhone: "+5356603249",
+            storeHours: "8:00 AM - 6:00 PM",
+            welcomeMessage: "Tu tienda de confianza • Pedidos a domicilio",
+            products: [
+                {
+                    id: "1",
+                    name: "Arroz Brasileño",
+                    description: "Arroz de grano largo, calidad premium para tus comidas.",
+                    basePrice: 2.50,
+                    unit: "lb",
+                    minQty: 0.5,
+                    icon: "fa-seedling",
+                    badge: "Popular",
+                    available: true
+                },
+                {
+                    id: "2",
+                    name: "Pollo Fresco",
+                    description: "Pollo fresco de granja, perfecto para tus recetas.",
+                    basePrice: 3.75,
+                    unit: "lb",
+                    minQty: 0.5,
+                    icon: "fa-drumstick-bite",
+                    badge: "Fresco",
+                    available: true
+                },
+                {
+                    id: "3",
+                    name: "Aceite de Cocina",
+                    description: "Aceite vegetal puro, ideal para freír y cocinar.",
+                    basePrice: 4.99,
+                    unit: "unidad",
+                    minQty: 1,
+                    icon: "fa-wine-bottle",
+                    badge: "Esencial",
+                    available: true
+                },
+                {
+                    id: "4",
+                    name: "Azúcar Refinada",
+                    description: "Azúcar blanca refinada, perfecta para endulzar.",
+                    basePrice: 1.80,
+                    unit: "lb",
+                    minQty: 0.5,
+                    icon: "fa-cookie-bite",
+                    badge: "Básico",
+                    available: true
+                },
+                {
+                    id: "5",
+                    name: "Queso Gouda",
+                    description: "Queso semi-duro, perfecto para sandwiches y pizzas.",
+                    basePrice: 6.50,
+                    unit: "lb",
+                    minQty: 0.25,
+                    icon: "fa-cheese",
+                    badge: "Premium",
+                    available: true
+                },
+                {
+                    id: "6",
+                    name: "Café Molido",
+                    description: "Café 100% arábica, tostado y molido al instante.",
+                    basePrice: 8.25,
+                    unit: "lb",
+                    minQty: 0.25,
+                    icon: "fa-coffee",
+                    badge: "Importado",
+                    available: true
+                }
+            ]
+        };
+
+        // ========== VARIABLES GLOBALES ==========
+        let cart = [];
+        let total = 0;
+        let customerInfo = { name: '', phone: '', address: '', notes: '' };
+        let adminSessionActive = false;
+        let sessionTimeout;
+
+        // ========== INICIALIZACIÓN ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            // Cargar datos guardados
+            loadStoreData();
+            loadCustomerInfo();
+            
+            // Inicializar productos
+            renderProducts();
+            updateCart();
+            
+            // Configurar botón admin
+            document.getElementById('adminToggle').addEventListener('click', openAdminLogin);
+            
+            // Verificar sesión admin existente
+            checkExistingSession();
+        });
+
+        // ========== FUNCIONES DE ALMACENAMIENTO ==========
+        function loadStoreData() {
+            const savedData = localStorage.getItem(ADMIN_CONFIG.STORE_DATA_KEY);
+            if (savedData) {
+                storeData = JSON.parse(savedData);
+                applyStoreData();
+            }
+        }
+
+        function saveStoreData() {
+            localStorage.setItem(ADMIN_CONFIG.STORE_DATA_KEY, JSON.stringify(storeData));
+            applyStoreData();
+            renderProducts();
+        }
+
+        function applyStoreData() {
+            // Aplicar datos a la interfaz
+            document.getElementById('headerStoreName').textContent = storeData.storeName;
+            document.getElementById('mainStoreName').textContent = storeData.storeName;
+            document.getElementById('mainSubtitle').textContent = storeData.welcomeMessage;
+            document.getElementById('displayHours').textContent = storeData.storeHours;
+            document.getElementById('footerStoreName').textContent = storeData.storeName;
+            document.getElementById('footerHours').textContent = `🕗 ${storeData.storeHours}`;
+            document.getElementById('footerPhone').textContent = storeData.storePhone;
+            document.getElementById('copyrightName').textContent = storeData.storeName;
+            
+            // Actualizar inputs del admin panel
+            document.getElementById('storeName').value = storeData.storeName;
+            document.getElementById('storePhone').value = storeData.storePhone;
+            document.getElementById('storeHours').value = storeData.storeHours;
+            document.getElementById('welcomeMessage').value = storeData.welcomeMessage;
+            
+            showNotification("Configuración actualizada", "success");
+        }
+
+        // ========== FUNCIONES DEL PANEL ADMIN ==========
+        function checkExistingSession() {
+            const session = localStorage.getItem(ADMIN_CONFIG.SESSION_KEY);
+            if (session) {
+                const sessionTime = parseInt(session);
+                const currentTime = new Date().getTime();
+                const minutesPassed = (currentTime - sessionTime) / (1000 * 60);
+                
+                if (minutesPassed < ADMIN_CONFIG.TIMEOUT) {
+                    adminSessionActive = true;
+                    updateSessionTimeout();
+                } else {
+                    localStorage.removeItem(ADMIN_CONFIG.SESSION_KEY);
+                }
+            }
+        }
+
+        function openAdminLogin() {
+            document.getElementById('adminLogin').classList.add('active');
+            document.getElementById('adminPassword').focus();
+        }
+
+        function checkAdminPassword() {
+            const password = document.getElementById('adminPassword').value;
+            const errorElement = document.getElementById('loginError');
+            
+            if (password === ADMIN_CONFIG.PASSWORD) {
+                // Contraseña correcta
+                adminSessionActive = true;
+                document.getElementById('adminLogin').classList.remove('active');
+                document.getElementById('adminPanel').classList.add('active');
+                document.getElementById('adminPassword').value = '';
+                errorElement.style.display = 'none';
+                
+                // Guardar sesión
+                localStorage.setItem(ADMIN_CONFIG.SESSION_KEY, new Date().getTime());
+                updateSessionTimeout();
+                
+                // Cargar productos en panel admin
+                renderAdminProducts();
+                showNotification("Sesión de administrador iniciada", "success");
+            } else {
+                // Contraseña incorrecta
+                errorElement.style.display = 'block';
+                document.getElementById('adminPassword').value = '';
+                document.getElementById('adminPassword').focus();
+            }
+        }
+
+        function updateSessionTimeout() {
+            if (sessionTimeout) clearTimeout(sessionTimeout);
+            
+            sessionTimeout = setTimeout(() => {
+                adminSessionActive = false;
+                localStorage.removeItem(ADMIN_CONFIG.SESSION_KEY);
+                closeAdminPanel();
+                showNotification("Sesión de administrador expirada", "warning");
+            }, ADMIN_CONFIG.TIMEOUT * 60 * 1000);
+        }
+
+        function closeAdminPanel() {
+            document.getElementById('adminPanel').classList.remove('active');
+        }
+
+        function changeAdminPassword() {
+            const newPass = document.getElementById('newPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+            
+            if (newPass.length < 4) {
+                showNotification("La contraseña debe tener al menos 4 caracteres", "error");
+                return;
+            }
+            
+            if (newPass !== confirmPass) {
+                showNotification("Las contraseñas no coinciden", "error");
+                return;
+            }
+            
+            ADMIN_CONFIG.PASSWORD = newPass;
+            document.getElementById('currentPasswordDisplay').textContent = newPass;
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            
+            showNotification("Contraseña cambiada exitosamente", "success");
+        }
+
+        // ========== GESTIÓN DE PRODUCTOS (ADMIN) ==========
+        function renderAdminProducts() {
+            const container = document.getElementById('productsAdminList');
+            container.innerHTML = '';
+            
+            storeData.products.forEach((product, index) => {
+                const productHTML = `
+                    <div class="admin-input-group" style="border: 1px solid #e0e0e0; padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <strong style="color: var(--primary);">${product.name}</strong>
+                            <button onclick="removeProduct(${index})" style="background: var(--danger); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        <div class="admin-grid">
+                            <div>
+                                <label class="admin-label">Nombre</label>
+                                <input type="text" class="admin-input" value="${product.name}" onchange="updateProductField(${index}, 'name', this.value)">
+                            </div>
+                            <div>
+                                <label class="admin-label">Precio Base ($)</label>
+                                <input type="number" step="0.01" class="admin-input" value="${product.basePrice}" onchange="updateProductField(${index}, 'basePrice', parseFloat(this.value))">
+                            </div>
+                            <div>
+                                <label class="admin-label">Unidad</label>
+                                <select class="admin-select" onchange="updateProductField(${index}, 'unit', this.value)">
+                                    <option value="lb" ${product.unit === 'lb' ? 'selected' : ''}>Libras (lb)</option>
+                                    <option value="kg" ${product.unit === 'kg' ? 'selected' : ''}>Kilogramos (kg)</option>
+                                    <option value="onz" ${product.unit === 'onz' ? 'selected' : ''}>Onzas (oz)</option>
+                                    <option value="unidad" ${product.unit === 'unidad' ? 'selected' : ''}>Unidades</option>
+                                    <option value="saco" ${product.unit === 'saco' ? 'selected' : ''}>Sacos</option>
+                                    <option value="paquete" ${product.unit === 'paquete' ? 'selected' : ''}>Paquetes</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="admin-label">Cantidad Mínima</label>
+                                <input type="number" step="0.01" class="admin-input" value="${product.minQty}" onchange="updateProductField(${index}, 'minQty', parseFloat(this.value))">
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <label class="admin-label">Descripción</label>
+                            <textarea class="admin-textarea" onchange="updateProductField(${index}, 'description', this.value)">${product.description}</textarea>
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <label class="admin-label">Icono (Clase FontAwesome)</label>
+                            <input type="text" class="admin-input" value="${product.icon}" onchange="updateProductField(${index}, 'icon', this.value)" placeholder="fa-icon-name">
+                        </div>
+                        <div style="margin-top: 1rem; display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="available-${index}" ${product.available ? 'checked' : ''} onchange="updateProductField(${index}, 'available', this.checked)">
+                            <label for="available-${index}" class="admin-label" style="margin: 0;">Disponible</label>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += productHTML;
+            });
+        }
+
+        function updateProductField(index, field, value) {
+            storeData.products[index][field] = value;
+            saveStoreData();
+        }
+
+        function addNewProduct() {
+            const newProduct = {
+                id: Date.now().toString(),
+                name: "Nuevo Producto",
+                description: "Descripción del producto",
+                basePrice: 1.00,
+                unit: "lb",
+                minQty: 0.5,
+                icon: "fa-box",
+                badge: "Nuevo",
+                available: true
+            };
+            
+            storeData.products.push(newProduct);
+            saveStoreData();
+            renderAdminProducts();
+        }
+
+        function removeProduct(index) {
+            if (confirm("¿Estás seguro de eliminar este producto?")) {
+                storeData.products.splice(index, 1);
+                saveStoreData();
+                renderAdminProducts();
+            }
+        }
+
+        function saveAllChanges() {
+            // Guardar configuración general
+            storeData.storeName = document.getElementById('storeName').value;
+            storeData.storePhone = document.getElementById('storePhone').value;
+            storeData.storeHours = document.getElementById('storeHours').value;
+            storeData.welcomeMessage = document.getElementById('welcomeMessage').value;
+            
+            saveStoreData();
+            showNotification("Todos los cambios guardados", "success");
+        }
+
+        function resetToDefaults() {
+            if (confirm("¿Restaurar valores por defecto? Se perderán los cambios actuales.")) {
+                localStorage.removeItem(ADMIN_CONFIG.STORE_DATA_KEY);
+                location.reload();
+            }
+        }
+
+        // ========== FUNCIONES DE LA TIENDA ==========
+        function renderProducts() {
+            const container = document.getElementById('productsContainer');
+            container.innerHTML = '';
+            
+            storeData.products.forEach(product => {
+                if (!product.available) return;
+                
+                const productHTML = `
+                    <div class="product-card" data-product-id="${product.id}">
+                        ${product.badge ? `<div class="product-badge">${product.badge}</div>` : ''}
+                        <div class="product-image">
+                            <i class="fas ${product.icon}"></i>
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-title">${product.name}</h3>
+                            <p class="product-description">${product.description}</p>
+                            
+                            <div class="quantity-controls">
+                                <button class="quantity-btn minus" onclick="updateQuantity('${product.id}', -${product.minQty})">-</button>
+                                <div class="quantity-display" id="quantity-${product.id}">${product.minQty}</div>
+                                <button class="quantity-btn plus" onclick="updateQuantity('${product.id}', ${product.minQty})">+</button>
+                            </div>
+                            
+                            <select class="unit-selector" id="unit-${product.id}">
+                                <option value="lb" ${product.unit === 'lb' ? 'selected' : ''}>Libras (lb)</option>
+                                <option value="kg" ${product.unit === 'kg' ? 'selected' : ''}>Kilogramos (kg)</option>
+                                <option value="onz" ${product.unit === 'onz' ? 'selected' : ''}>Onzas (oz)</option>
+                                <option value="unidad" ${product.unit === 'unidad' ? 'selected' : ''}>Unidades</option>
+                                <option value="saco" ${product.unit === 'saco' ? 'selected' : ''}>Sacos</option>
+                                <option value="paquete" ${product.unit === 'paquete' ? 'selected' : ''}>Paquetes</option>
+                            </select>
+                            
+                            <div class="product-price" id="price-${product.id}">$${(product.basePrice * product.minQty).toFixed(2)}</div>
+                            <div class="unit-price" id="unit-price-${product.id}">Precio por ${product.unit}: $${product.basePrice.toFixed(2)}</div>
+                            
+                            <button class="add-to-cart" onclick="addToCart('${product.id}')">
+                                <i class="fas fa-cart-plus"></i> Añadir al Carrito
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += productHTML;
+            });
+        }
+
+        function updateQuantity(productId, change) {
+            const product = storeData.products.find(p => p.id === productId);
+            if (!product) return;
+            
+            const quantityDisplay = document.getElementById(`quantity-${productId}`);
+            let currentQty = parseFloat(quantityDisplay.textContent);
+            let newQty = currentQty + change;
+            
+            if (newQty < product.minQty) {
+                newQty = product.minQty;
+            }
+            
+            quantityDisplay.textContent = newQty.toFixed(2);
+            updatePriceDisplay(productId);
+        }
+
+        function updatePriceDisplay(productId) {
+            const product = storeData.products.find(p => p.id === productId);
+            if (!product) return;
+            
+            const quantity = parseFloat(document.getElementById(`quantity-${productId}`).textContent);
+            const priceDisplay = document.getElementById(`price-${productId}`);
+            const unitPriceDisplay = document.getElementById(`unit-price-${productId}`);
+            
+            const totalPrice = product.basePrice * quantity;
+            priceDisplay.textContent = `$${totalPrice.toFixed(2)}`;
+            unitPriceDisplay.textContent = `Precio por ${product.unit}: $${product.basePrice.toFixed(2)}`;
+        }
+
+        function addToCart(productId) {
+            const product = storeData.products.find(p => p.id === productId);
+            if (!product) return;
+            
+            const quantity = parseFloat(document.getElementById(`quantity-${productId}`).textContent);
+            const unit = document.getElementById(`unit-${productId}`).value;
+            
+            const cartItem = {
+                id: productId,
+                name: product.name,
+                quantity: quantity,
+                unit: unit,
+                unitText: getUnitText(unit),
+                price: product.basePrice * quantity,
+                basePrice: product.basePrice
+            };
+            
+            // Verificar si ya existe en el carrito
+            const existingIndex = cart.findIndex(item => item.id === productId && item.unit === unit);
+            
+            if (existingIndex !== -1) {
+                cart[existingIndex].quantity += quantity;
+                cart[existingIndex].price += cartItem.price;
+            } else {
+                cart.push(cartItem);
+            }
+            
+            updateCart();
+            showNotification(`${quantity} ${getUnitText(unit)} de ${product.name} añadidos`, "success");
+            
+            // Resetear cantidad a mínimo
+            document.getElementById(`quantity-${productId}`).textContent = product.minQty.toFixed(2);
+            updatePriceDisplay(productId);
+        }
+
+        function getUnitText(unit) {
+            const units = {
+                'lb': 'lb',
+                'kg': 'kg',
+                'onz': 'oz',
+                'unidad': 'unidades',
+                'saco': 'sacos',
+                'paquete': 'paquetes'
+            };
+            return units[unit] || unit;
+        }
+
+        function updateCart() {
+            const cartItems = document.getElementById('cart-items');
+            const totalAmount = document.getElementById('total-amount');
+            
+            total = 0;
+            
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<p id="empty-cart-message">Tu carrito está vacío. Agrega productos para comenzar.</p>';
+                totalAmount.textContent = '0.00';
+                return;
+            }
+            
+            let cartHTML = '<h3 style="margin-bottom: 1rem; color: var(--dark);">Detalles del Pedido</h3>';
+            
+            cart.forEach((item, index) => {
+                total += item.price;
+                cartHTML += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--light); margin-bottom: 0.5rem; border-radius: 10px;">
+                        <div>
+                            <strong>${item.name}</strong>
+                            <div style="font-size: 0.9rem; opacity: 0.8;">
+                                ${item.quantity} ${item.unitText} - $${item.basePrice.toFixed(2)}/${storeData.products.find(p => p.id === item.id)?.unit || 'lb'}
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-weight: 600; color: var(--primary);">
+                                $${item.price.toFixed(2)}
+                            </span>
+                            <button onclick="removeFromCart(${index})" style="background: #ff4757; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;">
+                                ×
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            cartItems.innerHTML = cartHTML;
+            totalAmount.textContent = total.toFixed(2);
+        }
+
+        function removeFromCart(index) {
+            const item = cart[index];
+            cart.splice(index, 1);
+            updateCart();
+            showNotification(`${item.name} eliminado del carrito`);
+        }
+
+        // ========== FUNCIONES DEL CLIENTE ==========
+        function saveCustomerInfo() {
+            customerInfo.name = document.getElementById('customer-name').value.trim();
+            customerInfo.phone = document.getElementById('customer-phone').value.trim();
+            customerInfo.address = document.getElementById('customer-address').value.trim();
+            
+            if (!customerInfo.name || !customerInfo.phone || !customerInfo.address) {
+                showNotification("Completa todos los campos obligatorios", "warning");
+                return;
+            }
+            
+            localStorage.setItem('berkot_customer_info', JSON.stringify(customerInfo));
+            updateCustomerInfoDisplay();
+            showNotification("Información guardada", "success");
+        }
+
+        function loadCustomerInfo() {
+            const savedInfo = localStorage.getItem('berkot_customer_info');
+            if (savedInfo) {
+                customerInfo = JSON.parse(savedInfo);
+                updateCustomerInfoDisplay();
+            }
+        }
+
+        function updateCustomerInfoDisplay() {
+            const summaryDiv = document.getElementById('customer-info-summary');
+            const detailsDiv = document.getElementById('customer-details');
+            
+            if (customerInfo.name) {
+                summaryDiv.style.display = 'block';
+                detailsDiv.innerHTML = `
+                    <p><strong>Nombre:</strong> ${customerInfo.name}</p>
+                    <p><strong>Teléfono:</strong> ${customerInfo.phone}</p>
+                    <p><strong>Dirección:</strong> ${customerInfo.address}</p>
+                `;
+            }
+        }
+
+        function sendOrder() {
+            if (cart.length === 0) {
+                showNotification("Agrega productos al carrito", "warning");
+                return;
+            }
+            
+            if (!customerInfo.name || !customerInfo.phone || !customerInfo.address) {
+                showNotification("Completa tu información personal antes de enviar el pedido", "error");
+                document.querySelector('.customer-form').scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+            
+            const phoneNumber = storeData.storePhone.replace(/[^0-9]/g, '');
+            
+            let message = `¡Hola ${storeData.storeName}! Quiero hacer un pedido:\n\n`;
+            message += `👤 *CLIENTE:* ${customerInfo.name}\n`;
+            message += `📞 *TELÉFONO:* ${customerInfo.phone}\n`;
+            message += `📍 *DIRECCIÓN:* ${customerInfo.address}\n\n`;
+            message += `🛒 *PEDIDO:*\n`;
+            
+            cart.forEach(item => {
+                message += `• ${item.name}: ${item.quantity} ${item.unitText} - $${item.price.toFixed(2)}\n`;
+            });
+            
+            message += `\n💰 *TOTAL:* $${total.toFixed(2)}\n`;
+            message += `\n⏰ *HORA:* ${new Date().toLocaleString('es-ES')}\n`;
+            message += `\n✅ Por favor, confírmenme cuando el pedido sea aceptado.\n`;
+            
+            window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
+            showNotification("Pedido enviado por WhatsApp", "success");
+            
+            // Limpiar carrito después de enviar
+            setTimeout(() => {
+                cart = [];
+                updateCart();
+            }, 2000);
+        }
+
+        // ========== FUNCIONES UTILITARIAS ==========
+        function showNotification(message, type = "success") {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'}"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'fadeInUp 0.3s ease reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // ========== EVENT LISTENERS ADICIONALES ==========
+        document.addEventListener('keydown', function(e) {
+            // Atajo de teclado para admin: Ctrl+Shift+A
+            if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+                openAdminLogin();
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
