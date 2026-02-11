@@ -1,5 +1,5 @@
-// ========== BERKOT FIREBASE - VERSIÓN DEFINITIVA ==========
-// ========== TODOS LOS ERRORES CORREGIDOS ==========
+// ========== BERKOT FIREBASE - VERSIÓN CORREGIDA ==========
+// ========== SOLO WHATSAPP Y BOTÓN GUARDAR ARREGLADOS ==========
 
 console.log("🔥 BERKOT - INICIANDO SISTEMA DEFINITIVO");
 
@@ -34,7 +34,6 @@ let usuarioActual = null;
 function limpiezaTotal() {
     console.log("🧹 Limpieza total de la página...");
     
-    // ELIMINAR TODOS los contenedores de productos viejos
     const elementosEliminar = [
         '#productos-berkot', '#berkot-container', '.productos-berkot',
         '[id*="producto"]', '[class*="producto"]',
@@ -45,7 +44,6 @@ function limpiezaTotal() {
         document.querySelectorAll(selector).forEach(el => {
             if (el.id !== 'btn-carrito' && el.id !== 'btn-admin' && !el.id?.includes('whats')) {
                 el.remove();
-                console.log(`🗑️ Eliminado: ${selector}`);
             }
         });
     });
@@ -68,7 +66,6 @@ function crearContenedor() {
         z-index: 1000;
     `;
     
-    // Insertar AL PRINCIPIO del body
     if (document.body.firstChild) {
         document.body.insertBefore(contenedor, document.body.firstChild);
     } else {
@@ -109,7 +106,7 @@ function mostrarLogo(contenedor) {
     contenedor.innerHTML = logoHTML;
 }
 
-// ===== 4. MOSTRAR PRODUCTOS (SOLO DE FIREBASE) =====
+// ===== 4. MOSTRAR PRODUCTOS =====
 function mostrarProductos() {
     const contenedor = crearContenedor();
     mostrarLogo(contenedor);
@@ -374,7 +371,7 @@ window.verCarrito = function() {
     }
 };
 
-// ===== 10. BOTÓN CARRITO (SIEMPRE VISIBLE) =====
+// ===== 10. BOTÓN CARRITO =====
 function crearBotonCarrito() {
     const btnExistente = document.getElementById('btn-carrito');
     if (btnExistente) btnExistente.remove();
@@ -403,7 +400,7 @@ function crearBotonCarrito() {
     console.log("✅ Botón Carrito creado en DERECHA");
 }
 
-// ===== 11. BOTÓN ADMIN (SIEMPRE VISIBLE) =====
+// ===== 11. BOTÓN ADMIN =====
 function crearBotonAdmin() {
     const btnExistente = document.getElementById('btn-admin');
     if (btnExistente) btnExistente.remove();
@@ -431,55 +428,125 @@ function crearBotonAdmin() {
     console.log("✅ Botón Admin creado en IZQUIERDA");
 }
 
-// ===== 12. WHATSAPP (VISIBLE SIEMPRE) =====
+// ===== 12. WHATSAPP CORREGIDO - 100% FUNCIONAL =====
 function crearBotonWhatsApp() {
-    setTimeout(() => {
-        let whatsapp = document.querySelector('a[href*="wa.me"], a[href*="whatsapp"], [class*="whatsapp"], [id*="whatsapp"]');
-        
-        if (whatsapp) {
-            whatsapp.style.setProperty('position', 'fixed', 'important');
-            whatsapp.style.setProperty('left', '20px', 'important');
-            whatsapp.style.setProperty('bottom', '100px', 'important');
-            whatsapp.style.setProperty('z-index', '99999999', 'important');
-            whatsapp.style.setProperty('width', '60px', 'important');
-            whatsapp.style.setProperty('height', '60px', 'important');
-            whatsapp.style.setProperty('border-radius', '50%', 'important');
-            whatsapp.style.setProperty('background', '#25D366', 'important');
-            whatsapp.style.setProperty('display', 'flex', 'important');
-            whatsapp.style.setProperty('align-items', 'center', 'important');
-            whatsapp.style.setProperty('justify-content', 'center', 'important');
-            whatsapp.style.setProperty('box-shadow', '0 4px 15px rgba(37,211,102,0.4)', 'important');
-            console.log("✅ WhatsApp reposicionado: izquierda, bottom 100px");
-        } else {
-            // Crear WhatsApp si no existe
-            const nuevoWA = document.createElement('a');
-            nuevoWA.href = 'https://wa.me/5356603249';
-            nuevoWA.target = '_blank';
-            nuevoWA.innerHTML = '📱';
-            nuevoWA.style.cssText = `
-                position: fixed !important;
-                left: 20px !important;
-                bottom: 100px !important;
-                width: 60px !important;
-                height: 60px !important;
-                background: #25D366 !important;
-                color: white !important;
-                border-radius: 50% !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                font-size: 30px !important;
-                text-decoration: none !important;
-                z-index: 99999999 !important;
-                box-shadow: 0 4px 15px rgba(37,211,102,0.4) !important;
-            `;
-            document.body.appendChild(nuevoWA);
-            console.log("✅ WhatsApp creado desde cero");
-        }
-    }, 1500);
+    // Eliminar cualquier WhatsApp existente
+    document.querySelectorAll('.whatsapp-btn-fijo, a[href*="wa.me"], a[href*="whatsapp"]').forEach(el => el.remove());
+    
+    // Crear botón NUEVO con TODO funcionando
+    const waBtn = document.createElement('a');
+    waBtn.className = 'whatsapp-btn-fijo';
+    waBtn.href = 'https://wa.me/5356603249';
+    waBtn.target = '_blank';
+    waBtn.rel = 'noopener noreferrer';
+    waBtn.innerHTML = '📱';
+    waBtn.title = 'Contactar por WhatsApp';
+    
+    // ESTILOS DIRECTOS - POSICIÓN CORRECTA
+    waBtn.style.cssText = `
+        position: fixed !important;
+        left: 20px !important;
+        bottom: 100px !important;
+        width: 60px !important;
+        height: 60px !important;
+        background: #25D366 !important;
+        color: white !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 32px !important;
+        text-decoration: none !important;
+        box-shadow: 0 6px 20px rgba(37,211,102,0.4) !important;
+        z-index: 999999999 !important;
+        transition: all 0.3s ease !important;
+    `;
+    
+    // HOVER EFECTO
+    waBtn.onmouseover = function() {
+        this.style.transform = 'scale(1.1)';
+        this.style.boxShadow = '0 8px 25px rgba(37,211,102,0.6)';
+    };
+    waBtn.onmouseout = function() {
+        this.style.transform = 'scale(1)';
+        this.style.boxShadow = '0 6px 20px rgba(37,211,102,0.4)';
+    };
+    
+    document.body.appendChild(waBtn);
+    console.log('✅✅ WHATSAPP CREADO: izquierda 100px - Número: 5356603249');
 }
 
-// ===== 13. LOGIN =====
+// ===== 13. BOTÓN GUARDAR/ENVIAR WHATSAPP CORREGIDO =====
+window.enviarPedidoWhatsApp = function() {
+    console.log("📤 Enviando pedido por WhatsApp...");
+    
+    const nombre = document.getElementById('cliente-nombre');
+    const telefono = document.getElementById('cliente-telefono');
+    const direccion = document.getElementById('cliente-direccion');
+    const notas = document.getElementById('cliente-notas');
+    
+    if (!nombre || !telefono || !direccion) {
+        mostrarNotificacion('❌ Error con el formulario', 'error');
+        return;
+    }
+    
+    const nombreVal = nombre.value.trim();
+    const telefonoVal = telefono.value.trim();
+    const direccionVal = direccion.value.trim();
+    const notasVal = notas ? notas.value.trim() : '';
+    
+    if (!nombreVal || !telefonoVal || !direccionVal) {
+        mostrarNotificacion('❌ Completa todos los campos obligatorios', 'error');
+        return;
+    }
+    
+    const carrito = JSON.parse(localStorage.getItem('berkot_carrito')) || [];
+    
+    if (carrito.length === 0) {
+        mostrarNotificacion('❌ Carrito vacío', 'error');
+        return;
+    }
+    
+    let totalGeneral = 0;
+    let mensaje = "🛍️ *NUEVO PEDIDO - BERKOT*\n\n";
+    mensaje += "👤 *Cliente:* " + nombreVal + "\n";
+    mensaje += "📞 *Teléfono:* " + telefonoVal + "\n";
+    mensaje += "📍 *Dirección:* " + direccionVal + "\n\n";
+    mensaje += "*🛒 PRODUCTOS:*\n";
+    
+    carrito.forEach(item => {
+        const cant = item.cantidad || 0;
+        const precio = item.precio || 0;
+        const total = item.total || 0;
+        mensaje += `• ${item.nombre}: ${cant.toFixed(item.unidad === 'unidad' ? 0 : 1)} ${item.unidad} x $${precio.toFixed(2)} = $${total.toFixed(2)}\n`;
+        totalGeneral += total;
+    });
+    
+    mensaje += `\n💰 *TOTAL: $${totalGeneral.toFixed(2)}*`;
+    
+    if (notasVal) {
+        mensaje += `\n\n📝 *Notas:* ${notasVal}`;
+    }
+    
+    const url = `https://wa.me/5356603249?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, '_blank');
+    
+    mostrarNotificacion('✅ Pedido enviado por WhatsApp', 'success');
+    
+    const modal = document.getElementById('modal-pedido');
+    if (modal) modal.remove();
+    
+    setTimeout(() => {
+        if (confirm("✅ Pedido enviado. ¿Vaciar carrito?")) {
+            localStorage.removeItem('berkot_carrito');
+            carrito.length = 0;
+            actualizarContadorCarrito();
+            mostrarNotificacion('✅ Carrito vaciado', 'success');
+        }
+    }, 500);
+};
+
+// ===== 14. LOGIN =====
 window.mostrarLogin = async function() {
     const email = prompt("📧 Email:");
     if (!email) return;
@@ -503,7 +570,7 @@ window.mostrarLogin = async function() {
     }
 };
 
-// ===== 14. LOGOUT =====
+// ===== 15. LOGOUT =====
 window.logout = async function() {
     await signOut(auth);
     usuarioActual = null;
@@ -518,7 +585,7 @@ window.logout = async function() {
     mostrarProductos();
 };
 
-// ===== 15. PANEL ADMIN =====
+// ===== 16. PANEL ADMIN =====
 window.mostrarPanelAdmin = function() {
     const action = prompt(
         "👤 PANEL ADMIN\n\n1. ➕ Agregar producto\n2. 🔒 Cerrar sesión\n\nSelecciona 1 o 2:"
@@ -531,7 +598,7 @@ window.mostrarPanelAdmin = function() {
     }
 };
 
-// ===== 16. AGREGAR PRODUCTO =====
+// ===== 17. AGREGAR PRODUCTO =====
 window.agregarProducto = async function() {
     const nombre = prompt("📦 Nombre del producto:");
     if (!nombre) return;
@@ -561,7 +628,7 @@ window.agregarProducto = async function() {
     }
 };
 
-// ===== 17. EDITAR PRODUCTO =====
+// ===== 18. EDITAR PRODUCTO =====
 window.editarProducto = async function(id) {
     if (!usuarioActual) {
         mostrarNotificacion('❌ Debes iniciar sesión', 'error');
@@ -607,7 +674,7 @@ window.editarProducto = async function(id) {
     }
 };
 
-// ===== 18. ELIMINAR PRODUCTO =====
+// ===== 19. ELIMINAR PRODUCTO =====
 window.eliminarProducto = async function(id) {
     if (!usuarioActual) {
         mostrarNotificacion('❌ Debes iniciar sesión', 'error');
@@ -620,7 +687,7 @@ window.eliminarProducto = async function(id) {
     }
 };
 
-// ===== 19. ESTILOS GLOBALES =====
+// ===== 20. ESTILOS GLOBALES =====
 function agregarEstilos() {
     const estilos = document.createElement('style');
     estilos.textContent = `
@@ -637,7 +704,7 @@ function agregarEstilos() {
     document.head.appendChild(estilos);
 }
 
-// ===== 20. FIREBASE LISTENER =====
+// ===== 21. FIREBASE LISTENER =====
 const productosRef = ref(db, 'productos');
 onValue(productosRef, (snapshot) => {
     const data = snapshot.val();
@@ -658,14 +725,14 @@ onValue(productosRef, (snapshot) => {
     }
 });
 
-// ===== 21. INICIALIZAR =====
+// ===== 22. INICIALIZAR =====
 function inicializar() {
     console.log("🚀 Inicializando sistema...");
     
     agregarEstilos();
     crearBotonCarrito();
     crearBotonAdmin();
-    crearBotonWhatsApp();
+    crearBotonWhatsApp(); // ✅ WHATSAPP CORREGIDO
     
     console.log("✅✅✅ SISTEMA BERKOT LISTO");
     console.log("📞 Número: +53 5660 3249");
@@ -682,3 +749,4 @@ window.editarProducto = editarProducto;
 window.eliminarProducto = eliminarProducto;
 window.agregarProducto = agregarProducto;
 window.logout = logout;
+window.enviarPedidoWhatsApp = enviarPedidoWhatsApp; // ✅ EXPORTADO
