@@ -1,55 +1,81 @@
-// ========== BERKOT ULTIMATE - SISTEMA COMPLETO ==========
-
+// ========== BERKOT ULTIMATE - VERSIÓN CORREGIDA FINAL ==========
 console.log("🚀 Berkot Ultimate - Sistema completo iniciando...");
 
+// ===== ESTILOS ADMIN =====
+(function agregarEstilos() {
+    const estilos = document.createElement('style');
+    estilos.textContent = `
+        .admin-input, .admin-select, .admin-textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        .admin-input:focus, .admin-select:focus, .admin-textarea:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        .admin-btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: opacity 0.3s;
+        }
+        .admin-btn:hover {
+            opacity: 0.9;
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(estilos);
+})();
+
 // ===== CONFIGURACIÓN =====
+// 🔴 ¡PON TUS DATOS REALES AQUÍ! 🔴
 const BERKOT_ULTIMATE = {
-    // ⚠️ REEMPLAZA CON TUS DATOS ⚠️
-    BIN_ID: "698bb5e6d0ea881f40b08b3f",
-    ACCESS_KEY: "$2a$10$kCE3/fq2JB928OPxvj1tlOPvv9VQf4.NmndkYnXaJ3oda7obH4.lm",
-    PASSWORD: "Berkot2026",
+    BIN_ID: "698bb5e6d0ea881f40b08b3f",     // ← TU BIN_ID REAL
+    ACCESS_KEY: "$2a$10$kCE3/fq2JB928OPxvj1tlOPvv9VQf4.NmndkYnXaJ3oda7obH4.lm",      // ← TU ACCESS_KEY REAL
+    PASSWORD: "BerkotAdmin2026",            // ← CAMBIA ESTA CONTRASEÑA
     
-    // Datos locales
     datosLocales: null,
     
-    // Plantilla para nuevos productos
     PLANTILLA_PRODUCTO: {
         id: null,
         name: "Nuevo Producto",
-        description: "Descripción del producto",
+        description: "",
         basePrice: 1.00,
         unit: "lb",
         minQty: 0.5,
         icon: "fa-box",
-        badge: "Nuevo",
+        badge: "",
         available: true
     },
     
-    // ===== DETECCIÓN AUTOMÁTICA DE DATOS =====
     obtenerDatos() {
-        console.log("🔍 Detectando datos...");
-        
-        // Método 1: storeData global
         if (window.storeData) {
-            console.log("✅ Datos en storeData");
             this.datosLocales = window.storeData;
             return this.datosLocales;
         }
         
-        // Método 2: localStorage
-        const claves = ['berkot_store_data', 'berkot_online_data', ADMIN_CONFIG?.STORE_DATA_KEY];
-        for (const clave of claves) {
-            const datos = localStorage.getItem(clave);
-            if (datos) {
-                try {
-                    this.datosLocales = JSON.parse(datos);
-                    console.log(`✅ Datos en ${clave}`);
-                    return this.datosLocales;
-                } catch (e) {}
-            }
+        const datosLocal = localStorage.getItem('berkot_ultimate_data');
+        if (datosLocal) {
+            try {
+                this.datosLocales = JSON.parse(datosLocal);
+                return this.datosLocales;
+            } catch (e) {}
         }
         
-        // Método 3: Crear datos base
         this.datosLocales = {
             storeName: "Berkot",
             storePhone: "+5356603249",
@@ -58,105 +84,35 @@ const BERKOT_ULTIMATE = {
             products: []
         };
         
-        console.log("📝 Datos base creados");
         return this.datosLocales;
     },
     
-    // ===== SINCRONIZACIÓN INTELIGENTE =====
-    async sincronizarInteligente() {
-        console.log("🔄 Sincronización inteligente...");
-        
-        // 1. Obtener datos locales
-        const locales = this.obtenerDatos();
-        
-        // 2. Cargar de la nube
-        const nube = await this.cargarDeNube();
-        
-        if (!nube) {
-            console.log("⚠️ No hay datos en la nube, subiendo locales");
-            await this.guardarEnNube(locales, false);
-            return locales;
-        }
-        
-        // 3. Fusionar inteligentemente
-        const fusionados = this.fusionarInteligente(locales, nube);
-        
-        // 4. Actualizar storeData si existe
-        if (window.storeData) {
-            window.storeData = fusionados;
-        }
-        
-        // 5. Guardar en localStorage
-        localStorage.setItem('berkot_ultimate_data', JSON.stringify(fusionados));
-        
-        // 6. Guardar en la nube si hay cambios
-        if (JSON.stringify(nube) !== JSON.stringify(fusionados)) {
-            await this.guardarEnNube(fusionados, false);
-        }
-        
-        console.log(`✅ Sincronizado: ${fusionados.products?.length || 0} productos`);
-        return fusionados;
-    },
-    
-    // ===== FUSIÓN INTELIGENTE =====
-    fusionarInteligente(locales, nube) {
-        const resultado = { ...nube };
-        
-        if (!resultado.products) resultado.products = [];
-        if (!locales.products) locales.products = [];
-        
-        // Añadir productos locales que no están en la nube
-        locales.products.forEach(prodLocal => {
-            const existe = resultado.products.find(p => p.id === prodLocal.id);
-            if (!existe) {
-                resultado.products.push({ ...prodLocal });
-            }
-        });
-        
-        // Mantener el orden de la nube
-        resultado.products.sort((a, b) => {
-            const indexA = nube.products?.findIndex(p => p.id === a.id) ?? 1000;
-            const indexB = nube.products?.findIndex(p => p.id === b.id) ?? 1000;
-            return indexA - indexB;
-        });
-        
-        return resultado;
-    },
-    
-    // ===== CARGAR DE LA NUBE =====
     async cargarDeNube() {
         try {
             const url = `https://api.jsonbin.io/v3/b/${this.BIN_ID}/latest`;
-            const respuesta = await fetch(url, {
+            const res = await fetch(url, {
                 headers: { "X-Access-Key": this.ACCESS_KEY }
             });
-            
-            if (respuesta.ok) {
-                const datos = await respuesta.json();
-                console.log("☁️ Datos cargados de la nube");
-                return datos.record;
+            if (res.ok) {
+                const data = await res.json();
+                return data.record;
             }
-        } catch (error) {
-            console.warn("❌ Error cargando de la nube:", error.message);
-        }
+        } catch (e) {}
         return null;
     },
     
-    // ===== GUARDAR EN LA NUBE =====
     async guardarEnNube(datos, pedirPass = true) {
         if (pedirPass) {
-            const pass = prompt("🔐 Contraseña admin (Berkot2026):");
+            const pass = prompt("🔐 Contraseña admin:");
             if (pass !== this.PASSWORD) {
-                this.mostrarNotificacion("❌ Contraseña incorrecta", "error");
+                alert("❌ Contraseña incorrecta");
                 return false;
             }
         }
         
-        this.mostrarNotificacion("☁️ Guardando en la nube...", "info");
-        
         try {
             const url = `https://api.jsonbin.io/v3/b/${this.BIN_ID}`;
-            const respuesta = await fetch(url, {
+            const res = await fetch(url, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -166,58 +122,72 @@ const BERKOT_ULTIMATE = {
                 body: JSON.stringify(datos)
             });
             
-            if (respuesta.ok) {
-                this.mostrarNotificacion(
-                    `✅ ${datos.products?.length || 0} productos guardados para TODOS`,
-                    "success",
-                    6000
-                );
+            if (res.ok) {
+                this.mostrarNotificacion(`✅ ${datos.products?.length || 0} productos guardados`, "success");
                 return true;
-            } else {
-                throw new Error(`HTTP ${respuesta.status}`);
             }
-        } catch (error) {
-            this.mostrarNotificacion(`❌ Error: ${error.message}`, "error");
-            return false;
-        }
+        } catch (e) {}
+        return false;
     },
     
-    // ===== GESTIÓN DE PRODUCTOS =====
-    añadirProducto() {
-        const datos = this.obtenerDatos();
-        const nuevoId = Date.now().toString();
+    async sincronizarInteligente() {
+        const locales = this.obtenerDatos();
+        const nube = await this.cargarDeNube();
         
-        const nuevoProducto = {
-            ...this.PLANTILLA_PRODUCTO,
-            id: nuevoId,
-            name: `Producto ${datos.products.length + 1}`
-        };
-        
-        datos.products.push(nuevoProducto);
-        this.datosLocales = datos;
-        
-        // Actualizar storeData global
-        if (window.storeData) {
-            window.storeData = datos;
+        if (!nube) {
+            await this.guardarEnNube(locales, false);
+            return locales;
         }
         
+        const fusionados = { ...locales };
+        fusionados.products = [...(locales.products || [])];
+        
+        nube.products?.forEach(prodNube => {
+            if (!fusionados.products.find(p => p.id === prodNube.id)) {
+                fusionados.products.push(prodNube);
+            }
+        });
+        
+        localStorage.setItem('berkot_ultimate_data', JSON.stringify(fusionados));
+        if (window.storeData) window.storeData = fusionados;
+        
+        await this.guardarEnNube(fusionados, false);
+        return fusionados;
+    },
+    
+    async forzarSubidaCompleta() {
+        const datos = this.obtenerDatos();
+        this.mostrarNotificacion(`📦 Subiendo ${datos.products?.length || 0} productos...`, "info");
+        return await this.guardarEnNube(datos, true);
+    },
+    
+    añadirProducto() {
+        const datos = this.obtenerDatos();
+        const nuevo = {
+            ...this.PLANTILLA_PRODUCTO,
+            id: Date.now().toString(),
+            name: `Producto ${(datos.products?.length || 0) + 1}`
+        };
+        
+        if (!datos.products) datos.products = [];
+        datos.products.push(nuevo);
+        
+        localStorage.setItem('berkot_ultimate_data', JSON.stringify(datos));
+        if (window.storeData) window.storeData = datos;
+        
         this.mostrarNotificacion("✅ Producto añadido", "success");
-        return nuevoProducto;
+        this.guardarEnNube(datos, false);
+        return nuevo;
     },
     
     actualizarProducto(index, campo, valor) {
         const datos = this.obtenerDatos();
-        if (!datos.products || !datos.products[index]) return;
+        if (!datos.products?.[index]) return;
         
         datos.products[index][campo] = valor;
-        this.datosLocales = datos;
+        localStorage.setItem('berkot_ultimate_data', JSON.stringify(datos));
+        if (window.storeData) window.storeData = datos;
         
-        // Actualizar storeData global
-        if (window.storeData) {
-            window.storeData = datos;
-        }
-        
-        // Guardar automáticamente después de 1 segundo
         clearTimeout(this.debounceTimer);
         this.debounceTimer = setTimeout(() => {
             this.guardarEnNube(datos, false);
@@ -226,26 +196,33 @@ const BERKOT_ULTIMATE = {
     
     eliminarProducto(index) {
         const datos = this.obtenerDatos();
-        if (!datos.products || !datos.products[index]) return;
+        if (!datos.products?.[index]) return;
         
         const nombre = datos.products[index].name;
         if (!confirm(`¿Eliminar "${nombre}"?`)) return;
         
         datos.products.splice(index, 1);
-        this.datosLocales = datos;
-        
-        // Actualizar storeData global
-        if (window.storeData) {
-            window.storeData = datos;
-        }
+        localStorage.setItem('berkot_ultimate_data', JSON.stringify(datos));
+        if (window.storeData) window.storeData = datos;
         
         this.mostrarNotificacion(`🗑️ ${nombre} eliminado`, "success");
         this.guardarEnNube(datos, false);
     },
     
-    // ===== NOTIFICACIONES =====
+    editarProductoPrompt(index) {
+        const datos = this.obtenerDatos();
+        const producto = datos.products?.[index];
+        if (!producto) return;
+        
+        const nuevoNombre = prompt("Nuevo nombre del producto:", producto.name);
+        if (nuevoNombre?.trim()) {
+            this.actualizarProducto(index, 'name', nuevoNombre.trim());
+            if (typeof cargarListaProductosAdmin === 'function') cargarListaProductosAdmin();
+            if (typeof actualizarInterfaz === 'function') actualizarInterfaz();
+        }
+    },
+    
     mostrarNotificacion(mensaje, tipo = "info", tiempo = 4000) {
-        // Crear contenedor si no existe
         let contenedor = document.getElementById('berkot-notificaciones');
         if (!contenedor) {
             contenedor = document.createElement('div');
@@ -260,9 +237,8 @@ const BERKOT_ULTIMATE = {
             document.body.appendChild(contenedor);
         }
         
-        // Crear notificación
-        const notificacion = document.createElement('div');
-        notificacion.style.cssText = `
+        const noti = document.createElement('div');
+        noti.style.cssText = `
             background: ${tipo === 'success' ? '#27ae60' : 
                          tipo === 'error' ? '#e74c3c' : 
                          tipo === 'warning' ? '#f39c12' : '#3498db'};
@@ -274,49 +250,36 @@ const BERKOT_ULTIMATE = {
             animation: slideInRight 0.3s ease;
             font-family: Arial, sans-serif;
             font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
         `;
         
         const icono = tipo === 'success' ? 'check-circle' :
                      tipo === 'error' ? 'exclamation-circle' :
                      tipo === 'warning' ? 'exclamation-triangle' : 'info-circle';
         
-        notificacion.innerHTML = `
-            <i class="fas fa-${icono}" style="font-size: 20px;"></i>
-            <div>${mensaje}</div>
-        `;
+        noti.innerHTML = `<i class="fas fa-${icono}"></i> ${mensaje}`;
+        contenedor.appendChild(noti);
         
-        contenedor.appendChild(notificacion);
-        
-        // Auto-eliminar
         setTimeout(() => {
-            notificacion.style.animation = 'slideOutRight 0.3s ease';
-            setTimeout(() => notificacion.remove(), 300);
+            noti.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => noti.remove(), 300);
         }, tiempo);
     }
 };
 
-// ===== INTEGRACIÓN CON PÁGINA PRINCIPAL =====
-
-// 1. ACTUALIZAR INTERFAZ
+// ===== FUNCIONES DE INTERFAZ =====
 function actualizarInterfaz() {
-    if (window.applyStoreData) {
-        try { window.applyStoreData(); } catch(e) {}
-    }
-    if (window.renderProducts) {
-        try { window.renderProducts(); } catch(e) {}
-    }
+    if (window.applyStoreData) try { window.applyStoreData(); } catch(e) {}
+    if (window.renderProducts) try { window.renderProducts(); } catch(e) {}
 }
 
-// 2. CARGAR LISTA DE PRODUCTOS EN PANEL ADMIN
+// ===== CARGAR LISTA DE PRODUCTOS =====
 function cargarListaProductosAdmin() {
     const contenedor = document.getElementById('lista-productos-admin');
     if (!contenedor) return;
     
     const datos = BERKOT_ULTIMATE.obtenerDatos();
-    if (!datos.products || datos.products.length === 0) {
+    
+    if (!datos.products?.length) {
         contenedor.innerHTML = `
             <div style="text-align: center; padding: 20px; color: #666;">
                 <i class="fas fa-box-open" style="font-size: 40px; margin-bottom: 10px;"></i>
@@ -329,9 +292,9 @@ function cargarListaProductosAdmin() {
     contenedor.innerHTML = '';
     
     datos.products.forEach((producto, index) => {
-        const productoDiv = document.createElement('div');
-        productoDiv.className = 'admin-input-group';
-        productoDiv.style.cssText = `
+        const div = document.createElement('div');
+        div.className = 'admin-product-card';
+        div.style.cssText = `
             border: 1px solid #ddd;
             padding: 15px;
             border-radius: 10px;
@@ -339,7 +302,7 @@ function cargarListaProductosAdmin() {
             background: white;
         `;
         
-        productoDiv.innerHTML = `
+        div.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
                 <div>
                     <strong style="color: #2c3e50;">${producto.name || 'Sin nombre'}</strong>
@@ -390,12 +353,12 @@ function cargarListaProductosAdmin() {
                 <label style="font-size: 12px; color: #666;">Descripción</label>
                 <textarea class="admin-textarea" 
                           onchange="BERKOT_ULTIMATE.actualizarProducto(${index}, 'description', this.value)"
-                          style="width: 100%; min-height: 60px;">${producto.description || ''}</textarea>
+                          style="width: 100%; min-height: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">${producto.description || ''}</textarea>
             </div>
             
             <div style="display: flex; gap: 20px; margin-top: 10px;">
                 <label style="display: flex; align-items: center; gap: 5px; font-size: 12px;">
-                    <input type="checkbox" ${producto.available ? 'checked' : ''} 
+                    <input type="checkbox" ${producto.available !== false ? 'checked' : ''} 
                            onchange="BERKOT_ULTIMATE.actualizarProducto(${index}, 'available', this.checked)">
                     Disponible
                 </label>
@@ -408,76 +371,45 @@ function cargarListaProductosAdmin() {
             </div>
         `;
         
-        contenedor.appendChild(productoDiv);
+        contenedor.appendChild(div);
     });
 }
 
-// 3. AÑADIR FUNCIÓN PARA EDITAR NOMBRE
-BERKOT_ULTIMATE.editarProductoPrompt = function(index) {
-    const datos = this.obtenerDatos();
-    const producto = datos.products[index];
-    if (!producto) return;
-    
-    const nuevoNombre = prompt("Nuevo nombre del producto:", producto.name);
-    if (nuevoNombre && nuevoNombre.trim()) {
-        this.actualizarProducto(index, 'name', nuevoNombre.trim());
-        cargarListaProductosAdmin();
-        actualizarInterfaz();
-    }
-};
-
-// ===== PANEL ADMIN MEJORADO =====
+// ===== PANEL ADMIN =====
 function integrarPanelAdmin() {
     const intervalo = setInterval(() => {
         const panelAdmin = document.getElementById('adminPanel');
         if (panelAdmin) {
             clearInterval(intervalo);
             
-            // Crear sección de gestión
             const seccion = document.createElement('div');
             seccion.className = 'admin-section';
             seccion.innerHTML = `
                 <h3 class="section-title">
-                    <i class="fas fa-cloud"></i> Berkot Ultimate - Gestión Completa
+                    <i class="fas fa-cloud"></i> Berkot Ultimate - Gestión de Productos
                 </h3>
                 
-                <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                        <i class="fas fa-info-circle" style="color: #3498db;"></i>
-                        <span style="font-size: 14px; color: #666;">
-                            Sistema automático de sincronización en tiempo real
-                        </span>
-                    </div>
-                </div>
+                <div id="lista-productos-admin" style="margin-bottom: 20px;"></div>
                 
-                <div id="lista-productos-admin" style="margin-bottom: 20px;">
-                    <!-- Los productos se cargarán aquí -->
-                </div>
-                
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0;">
                     <button id="btn-ultimate-nuevo" class="admin-btn" style="background: #27ae60;">
                         <i class="fas fa-plus"></i> Nuevo Producto
                     </button>
                     <button id="btn-ultimate-sincronizar" class="admin-btn" style="background: #3498db;">
-                        <i class="fas fa-sync-alt"></i> Sincronizar Ahora
-                    </button>
-                    <button id="btn-ultimate-guardar" class="admin-btn" style="background: #9b59b6;">
-                        <i class="fas fa-cloud-upload-alt"></i> Guardar en Nube
+                        <i class="fas fa-sync"></i> Sincronizar
                     </button>
                     <button id="btn-ultimate-forzar" class="admin-btn" style="background: #e74c3c;">
-                        <i class="fas fa-bolt"></i> Forzar Sincronización
+                        <i class="fas fa-cloud-upload-alt"></i> FORZAR SUBIDA
                     </button>
                 </div>
                 
-                <div style="margin-top: 15px; font-size: 12px; color: #666; text-align: center;">
-                    <i class="fas fa-mobile-alt"></i> Los cambios se verán en todos los dispositivos en segundos
+                <div style="font-size: 12px; color: #666; text-align: center; margin-top: 10px;">
+                    <i class="fas fa-info-circle"></i> Los cambios se guardan automáticamente en la nube
                 </div>
             `;
             
-            // Insertar al principio
             panelAdmin.insertBefore(seccion, panelAdmin.firstChild);
             
-            // Configurar botones
             document.getElementById('btn-ultimate-nuevo').onclick = () => {
                 BERKOT_ULTIMATE.añadirProducto();
                 cargarListaProductosAdmin();
@@ -490,32 +422,18 @@ function integrarPanelAdmin() {
                 actualizarInterfaz();
             };
             
-            document.getElementById('btn-ultimate-guardar').onclick = async () => {
-                const datos = BERKOT_ULTIMATE.obtenerDatos();
-                await BERKOT_ULTIMATE.guardarEnNube(datos, true);
-            };
-            
             document.getElementById('btn-ultimate-forzar').onclick = async () => {
-                if (confirm("⚠️ ¿Forzar sincronización completa?\n\nEsto descargará todos los datos de la nube.")) {
-                    const datos = await BERKOT_ULTIMATE.cargarDeNube();
-                    if (datos) {
-                        BERKOT_ULTIMATE.datosLocales = datos;
-                        if (window.storeData) window.storeData = datos;
-                        localStorage.setItem('berkot_ultimate_data', JSON.stringify(datos));
-                        cargarListaProductosAdmin();
-                        actualizarInterfaz();
-                        BERKOT_ULTIMATE.mostrarNotificacion("✅ Sincronización forzada completa", "success");
-                    }
+                if (confirm("⚠️ ¿FORZAR SUBIDA? Esto SOBREESCRIBIRÁ la nube con TODOS tus productos actuales.")) {
+                    await BERKOT_ULTIMATE.forzarSubidaCompleta();
                 }
             };
             
-            // Cargar lista inicial
             cargarListaProductosAdmin();
         }
     }, 1000);
 }
 
-// ===== PANEL DE CONTROL VISIBLE =====
+// ===== PANEL FLOTANTE =====
 function crearPanelControl() {
     const panel = document.createElement('div');
     panel.id = 'berkot-ultimate-panel';
@@ -523,179 +441,117 @@ function crearPanelControl() {
         position: fixed;
         bottom: 20px;
         left: 20px;
-        background: rgba(44, 62, 80, 0.95);
+        background: linear-gradient(145deg, #2c3e50, #34495e);
         color: white;
         padding: 15px;
         border-radius: 15px;
         z-index: 9998;
         font-family: Arial, sans-serif;
         font-size: 13px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
         min-width: 250px;
-        backdrop-filter: blur(10px);
-        border: 2px solid #9b59b6;
+        border: 2px solid #3498db;
     `;
     
     panel.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-            <strong style="color: #9b59b6;">
-                <i class="fas fa-crown"></i> Berkot Ultimate
-            </strong>
-            <span id="ultimate-status" style="color: #2ecc71; font-size: 18px;">●</span>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+            <i class="fas fa-crown" style="color: #f1c40f; font-size: 20px;"></i>
+            <strong style="font-size: 16px;">Berkot Ultimate</strong>
+            <span style="margin-left: auto; background: #27ae60; padding: 3px 10px; border-radius: 20px; font-size: 11px;">
+                ONLINE
+            </span>
         </div>
-        
-        <div style="font-size: 12px; color: #ecf0f1; margin-bottom: 10px;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
-                <i class="fas fa-box" style="color: #3498db;"></i>
-                <span>Productos: <span id="ultimate-contador">0</span></span>
+        <div style="margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 10px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span><i class="fas fa-box"></i> Productos:</span>
+                <span id="ultimate-contador" style="font-weight: bold; color: #f1c40f;">0</span>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <i class="fas fa-cloud" style="color: #9b59b6;"></i>
-                <span>Estado: <span id="ultimate-estado">Conectado</span></span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; margin-top: 5px;">
-                <i class="fas fa-sync" style="color: #f39c12;"></i>
-                <span>Sincroniza: <span id="ultimate-tiempo">ahora</span></span>
+            <div style="display: flex; justify-content: space-between;">
+                <span><i class="fas fa-cloud"></i> Nube:</span>
+                <span id="ultimate-estado" style="color: #2ecc71;">Conectado</span>
             </div>
         </div>
-        
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <button id="ultimate-btn-sync" style="
-                flex: 1;
-                padding: 8px;
-                background: #3498db;
-                color: white;
-                border: none;
-                border-radius: 20px;
-                font-size: 12px;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 5px;
-            ">
-                <i class="fas fa-sync-alt"></i> Sincronizar
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button id="panel-sync" style="padding: 10px; background: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                <i class="fas fa-sync"></i> Sinc
             </button>
-            
-            <button id="ultimate-btn-add" style="
-                flex: 1;
-                padding: 8px;
-                background: #27ae60;
-                color: white;
-                border: none;
-                border-radius: 20px;
-                font-size: 12px;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 5px;
-            ">
+            <button id="panel-add" style="padding: 10px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer;">
                 <i class="fas fa-plus"></i> Añadir
+            </button>
+            <button id="panel-force" style="padding: 10px; background: #e74c3c; color: white; border: none; border-radius: 8px; cursor: pointer; grid-column: span 2;">
+                <i class="fas fa-cloud-upload-alt"></i> FORZAR SUBIDA A NUBE
             </button>
         </div>
     `;
     
     document.body.appendChild(panel);
     
-    // Actualizar contador
-    const actualizarPanel = () => {
-        const datos = BERKOT_ULTIMATE.obtenerDatos();
-        const count = datos.products?.length || 0;
-        document.getElementById('ultimate-contador').textContent = count;
-        
-        // Actualizar estado
-        const estado = document.getElementById('ultimate-estado');
-        const statusIcon = document.getElementById('ultimate-status');
-        
-        if (BERKOT_ULTIMATE.BIN_ID === "TU_BIN_ID_AQUI") {
-            estado.textContent = "No configurado";
-            statusIcon.style.color = "#e74c3c";
-        } else {
-            estado.textContent = "Conectado";
-            statusIcon.style.color = "#2ecc71";
-        }
-    };
-    
-    // Botones del panel
-    document.getElementById('ultimate-btn-sync').onclick = async () => {
-        document.getElementById('ultimate-tiempo').textContent = "sincronizando...";
+    document.getElementById('panel-sync').onclick = async () => {
         await BERKOT_ULTIMATE.sincronizarInteligente();
-        actualizarPanel();
-        document.getElementById('ultimate-tiempo').textContent = "ahora";
-    };
-    
-    document.getElementById('ultimate-btn-add').onclick = () => {
-        BERKOT_ULTIMATE.añadirProducto();
-        actualizarPanel();
+        cargarListaProductosAdmin();
         actualizarInterfaz();
     };
     
-    // Actualizar cada 5 segundos
-    setInterval(actualizarPanel, 5000);
+    document.getElementById('panel-add').onclick = () => {
+        BERKOT_ULTIMATE.añadirProducto();
+        cargarListaProductosAdmin();
+        actualizarInterfaz();
+    };
+    
+    document.getElementById('panel-force').onclick = async () => {
+        if (confirm("⚠️ ¿FORZAR SUBIDA COMPLETA? Esto reemplazará TODOS los productos en la nube.")) {
+            await BERKOT_ULTIMATE.forzarSubidaCompleta();
+        }
+    };
+    
+    function actualizarPanel() {
+        const datos = BERKOT_ULTIMATE.obtenerDatos();
+        const contador = document.getElementById('ultimate-contador');
+        if (contador) contador.textContent = datos.products?.length || 0;
+    }
+    
+    setInterval(actualizarPanel, 2000);
     actualizarPanel();
 }
 
-// ===== INICIALIZAR SISTEMA =====
+// ===== VERIFICAR CONFIGURACIÓN =====
+function verificarConfiguracion() {
+    if (BERKOT_ULTIMATE.BIN_ID === "TU_BIN_ID_AQUI" || 
+        BERKOT_ULTIMATE.ACCESS_KEY === "TU_ACCESS_KEY_AQUI" ||
+        BERKOT_ULTIMATE.BIN_ID.includes("TU_")) {
+        console.warn("⚠️ Configura tus credenciales de JSONBin.io en berkot.js");
+        setTimeout(() => {
+            BERKOT_ULTIMATE.mostrarNotificacion?.("⚠️ Configura tus credenciales en berkot.js", "warning", 10000);
+        }, 2000);
+    }
+}
+
+// ===== OCULTAR CONTRASEÑA =====
+setTimeout(function() {
+    document.querySelectorAll('div, span, p, label, td, th, h1, h2, h3, h4').forEach(el => {
+        if (el.innerHTML) {
+            el.innerHTML = el.innerHTML.replace(/berkot2026/gi, '••••••••');
+            el.innerHTML = el.innerHTML.replace(/Berkot2026/gi, '••••••••');
+            el.innerHTML = el.innerHTML.replace(/Contraseña:.*?(<br>|$)/gi, '');
+        }
+    });
+}, 500);
+
+// ===== INICIALIZAR =====
 async function iniciarBerkotUltimate() {
     console.log("🎯 Iniciando Berkot Ultimate...");
     
-    // 1. Añadir estilos CSS
-    const estilos = document.createElement('style');
-    estilos.textContent = `
-        @keyframes slideInRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slideOutRight {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-    `;
-    document.head.appendChild(estilos);
-    
-    // 2. Crear panel de control
     crearPanelControl();
-    
-    // 3. Integrar con panel admin
     integrarPanelAdmin();
     
-    // 4. Sincronizar inicialmente
     setTimeout(async () => {
         await BERKOT_ULTIMATE.sincronizarInteligente();
         actualizarInterfaz();
-    }, 2000);
+        console.log("✅ Sincronización inicial completada");
+    }, 1500);
     
-    // 5. Sincronizar automáticamente cada 2 minutos
-    setInterval(async () => {
-        await BERKOT_ULTIMATE.sincronizarInteligente();
-        actualizarInterfaz();
-    }, 120000);
-    
-    // 6. Hacer disponible globalmente
     window.BERKOT_ULTIMATE = BERKOT_ULTIMATE;
-    
     console.log("✅ Berkot Ultimate inicializado correctamente");
-}
-
-// ===== VERIFICAR CREDENCIALES =====
-function verificarConfiguracion() {
-    if (BERKOT_ULTIMATE.BIN_ID === "TU_BIN_ID_AQUI" || 
-        BERKOT_ULTIMATE.ACCESS_KEY === "TU_ACCESS_KEY_AQUI") {
-        
-        setTimeout(() => {
-            BERKOT_ULTIMATE.mostrarNotificacion(
-                "⚠️ Configura tus credenciales en berkot.js", 
-                "warning", 
-                10000
-            );
-        }, 3000);
-    }
 }
 
 // ===== EJECUTAR =====
@@ -708,81 +564,7 @@ if (document.readyState === 'loading') {
     setTimeout(() => {
         iniciarBerkotUltimate();
         verificarConfiguracion();
-    }, 1000);
+    }, 500);
 }
 
-console.log("👑 Berkot Ultimate - Sistema completo cargado");
-
-// ===== PROTECCIÓN MÁXIMA - ELIMINAR DATOS SENSIBLES =====
-(function protegerDatosSensibles() {
-    console.log("🛡️ Activando protección de datos sensibles...");
-    
-    // Esperar a que cargue la página
-    function iniciarProteccion() {
-        // Lista de datos a ocultar
-        const datosPeligrosos = [
-            'berkot2026', 'Berkot2026', 'BERKOT2026',
-            'Contraseña:', 'Password:', 'contraseña:',
-            'admin123', 'password', '123456'
-        ];
-        
-        // 1. Eliminar texto visible
-        const walker = document.createTreeWalker(
-            document.body,
-            NodeFilter.SHOW_TEXT,
-            null,
-            false
-        );
-        
-        let node;
-        while (node = walker.nextNode()) {
-            datosPeligrosos.forEach(dato => {
-                if (node.textContent.includes(dato)) {
-                    // Reemplazar con asteriscos
-                    const nuevoTexto = node.textContent.replace(
-                        new RegExp(dato, 'gi'),
-                        '*******'
-                    );
-                    node.textContent = nuevoTexto;
-                }
-            });
-        }
-        
-        // 2. Limpiar HTML
-        document.querySelectorAll('*').forEach(element => {
-            if (element.innerHTML) {
-                let html = element.innerHTML;
-                datosPeligrosos.forEach(dato => {
-                    html = html.replace(new RegExp(dato, 'gi'), '*******');
-                });
-                element.innerHTML = html;
-            }
-        });
-        
-        // 3. Bloquear inspección (parcial)
-        document.addEventListener('contextmenu', e => e.preventDefault());
-        document.addEventListener('keydown', e => {
-            // Bloquear F12, Ctrl+Shift+I, Ctrl+U
-            if (e.key === 'F12' || 
-                (e.ctrlKey && e.shiftKey && e.key === 'I') ||
-                (e.ctrlKey && e.key === 'u')) {
-                e.preventDefault();
-                alert('🔒 Acceso restringido');
-            }
-        });
-        
-        console.log("✅ Protección activada - Datos sensibles ocultos");
-    }
-    
-    // Ejecutar en diferentes momentos
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', iniciarProteccion);
-    } else {
-        iniciarProteccion();
-    }
-    
-    // Ejecuciones adicionales
-    setTimeout(iniciarProteccion, 1000);
-    setTimeout(iniciarProteccion, 3000);
-    setInterval(iniciarProteccion, 30000); // Cada 30 segundos
-})();
+console.log("👑 Berkot Ultimate - Versión Corregida Final Cargada");
