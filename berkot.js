@@ -1,9 +1,9 @@
-// ========== BERKOT FIREBASE - VERSIÓN DEFINITIVA FUNCIONAL ==========
-// ========== CONFIGURADO CON TUS CREDENCIALES ==========
+// ========== BERKOT FIREBASE - VERSIÓN DEFINITIVA CORREGIDA ==========
+// ========== CON SINCRONIZACIÓN INSTANTÁNEA EN TODOS LOS DISPOSITIVOS ==========
 
 console.log("🔥 BERKOT FIREBASE - Iniciando sistema...");
 
-// ===== 🔴 TUS CREDENCIALES DE FIREBASE (YA CONFIGURADAS) 🔴 =====
+// ===== 🔴 TUS CREDENCIALES DE FIREBASE =====
 const firebaseConfig = {
     apiKey: "AIzaSyBLNbTI1YrKVb1iA7YxTSSYRVCh3DiJHEY",
     authDomain: "berkot-nn-9938d.firebaseapp.com",
@@ -15,7 +15,7 @@ const firebaseConfig = {
     measurementId: "G-RJ9F7GR7GP"
 };
 
-// ===== IMPORTAR FIREBASE DESDE CDN =====
+// ===== IMPORTAR FIREBASE =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, onValue, push, set, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -28,13 +28,110 @@ const auth = getAuth(app);
 // ===== VARIABLE GLOBAL DE PRODUCTOS =====
 window.storeData = window.storeData || { products: [] };
 
-// ===== 1. ESCUCHAR CAMBIOS EN TIEMPO REAL =====
+// ===== FUNCIÓN PRINCIPAL PARA MOSTRAR PRODUCTOS =====
+function mostrarProductosEnPagina() {
+    console.log("🔄 Actualizando productos en la página...");
+    
+    // 1. BUSCAR TODOS LOS POSIBLES CONTENEDORES DE PRODUCTOS
+    let contenedores = document.querySelectorAll('.products, .product-grid, #products, .product-list, [class*="producto"], [class*="product"], [id*="producto"], [id*="product"]');
+    
+    // 2. SI NO HAY CONTENEDORES, CREAR UNO AUTOMÁTICAMENTE
+    if (contenedores.length === 0) {
+        console.log("📦 No hay contenedor de productos. Creando uno...");
+        
+        // Buscar dónde insertar los productos
+        const main = document.querySelector('main') || document.querySelector('.content') || document.querySelector('body');
+        
+        // Crear sección de productos
+        const seccionProductos = document.createElement('div');
+        seccionProductos.id = 'seccion-productos-berkot';
+        seccionProductos.style.cssText = `
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        `;
+        
+        main.appendChild(seccionProductos);
+        contenedores = [seccionProductos];
+        console.log("✅ Contenedor de productos creado automáticamente");
+    }
+    
+    // 3. MOSTRAR PRODUCTOS EN CADA CONTENEDOR
+    contenedores.forEach(contenedor => {
+        // Guardar referencia para futuras actualizaciones
+        window.contenedorProductos = contenedor;
+        
+        // Generar HTML de productos
+        let html = '';
+        
+        if (!window.storeData.products || window.storeData.products.length === 0) {
+            html = `
+                <div style="text-align: center; padding: 40px; color: #666;">
+                    <h3>🛒 No hay productos disponibles</h3>
+                    <p>Agrega productos desde el panel de administración</p>
+                </div>
+            `;
+        } else {
+            html = `
+                <h2 style="text-align: center; margin: 30px 0; color: #333;">🛍️ Nuestros Productos</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; padding: 20px;">
+            `;
+            
+            window.storeData.products.forEach(p => {
+                html += `
+                    <div style="
+                        border: 1px solid #e0e0e0;
+                        border-radius: 12px;
+                        padding: 20px;
+                        background: white;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                        transition: transform 0.3s, box-shadow 0.3s;
+                        display: flex;
+                        flex-direction: column;
+                    " 
+                    onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)';"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)';">
+                        <h3 style="margin: 0 0 10px 0; color: #333; font-size: 1.2em;">${p.name || 'Producto'}</h3>
+                        <p style="font-size: 28px; color: #27ae60; font-weight: bold; margin: 10px 0; display: flex; align-items: baseline;">
+                            $${p.basePrice?.toFixed(2) || '0.00'}
+                            <span style="font-size: 14px; color: #666; font-weight: normal; margin-left: 5px;">/${p.unit || 'lb'}</span>
+                        </p>
+                        ${p.description ? `<p style="color: #666; margin: 10px 0; line-height: 1.4;">${p.description}</p>` : ''}
+                        <div style="margin-top: auto; padding-top: 15px;">
+                            <span style="
+                                background: ${p.available !== false ? '#e8f5e9' : '#ffebee'};
+                                color: ${p.available !== false ? '#2e7d32' : '#c62828'};
+                                padding: 4px 12px;
+                                border-radius: 20px;
+                                font-size: 12px;
+                                font-weight: bold;
+                            ">
+                                ${p.available !== false ? '✓ Disponible' : '✗ Agotado'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `</div>`;
+        }
+        
+        // REEMPLAZAR TODO EL CONTENIDO DEL CONTENEDOR
+        contenedor.innerHTML = html;
+    });
+    
+    console.log(`✅ ${window.storeData.products?.length || 0} productos mostrados en la página`);
+}
+
+// ===== ESCUCHAR CAMBIOS EN TIEMPO REAL =====
 const productosRef = ref(db, 'productos');
 
 onValue(productosRef, (snapshot) => {
     const productos = snapshot.val();
     
     if (productos) {
+        // Convertir objeto de Firebase a array y GUARDAR EN TIEMPO REAL
         window.storeData.products = Object.keys(productos).map(key => ({
             id: key,
             name: productos[key].name || "Producto",
@@ -48,31 +145,28 @@ onValue(productosRef, (snapshot) => {
         
         console.log(`✅ ${window.storeData.products.length} productos cargados desde Firebase`);
         
-        // ACTUALIZAR LA INTERFAZ SI EXISTEN LAS FUNCIONES
-        if (typeof window.renderProducts === 'function') {
-            window.renderProducts();
-        }
-        if (typeof window.actualizarInterfaz === 'function') {
-            window.actualizarInterfaz();
-        }
-        if (typeof window.cargarListaProductosAdmin === 'function') {
-            window.cargarListaProductosAdmin();
-        }
+        // ACTUALIZAR LA PÁGINA INMEDIATAMENTE
+        mostrarProductosEnPagina();
         
-        // DISPARAR EVENTO PERSONALIZADO
-        window.dispatchEvent(new CustomEvent('firebase-productos-actualizados', { 
-            detail: window.storeData.products 
-        }));
+        // Guardar copia local para respaldo
+        localStorage.setItem('berkot_productos_backup', JSON.stringify(window.storeData.products));
     }
 }, (error) => {
     console.error("❌ Error cargando productos:", error);
+    
+    // Intentar cargar de respaldo local
+    const backup = localStorage.getItem('berkot_productos_backup');
+    if (backup) {
+        window.storeData.products = JSON.parse(backup);
+        mostrarProductosEnPagina();
+        console.log("📦 Productos cargados desde respaldo local");
+    }
 });
 
-// ===== 2. FUNCIÓN PARA GUARDAR PRODUCTO =====
+// ===== FUNCIÓN PARA GUARDAR PRODUCTO =====
 window.guardarProducto = async function(producto) {
     try {
         if (!producto.id) {
-            // NUEVO PRODUCTO
             const newRef = push(productosRef);
             producto.id = newRef.key;
             await set(newRef, {
@@ -81,11 +175,10 @@ window.guardarProducto = async function(producto) {
                 description: producto.description || "",
                 unit: producto.unit || "lb",
                 minQty: producto.minQty || 0.5,
-                available: producto.available !== false,
-                icon: producto.icon || "fa-box"
+                available: true,
+                icon: "fa-box"
             });
         } else {
-            // ACTUALIZAR PRODUCTO EXISTENTE
             await set(ref(db, `productos/${producto.id}`), {
                 name: producto.name,
                 basePrice: producto.basePrice,
@@ -106,7 +199,7 @@ window.guardarProducto = async function(producto) {
     }
 };
 
-// ===== 3. FUNCIÓN PARA ELIMINAR PRODUCTO =====
+// ===== FUNCIÓN PARA ELIMINAR PRODUCTO =====
 window.eliminarProducto = async function(id) {
     if (!confirm("¿Estás seguro de eliminar este producto?")) return false;
     
@@ -121,7 +214,7 @@ window.eliminarProducto = async function(id) {
     }
 };
 
-// ===== 4. FUNCIÓN PARA INICIAR SESIÓN =====
+// ===== FUNCIÓN PARA INICIAR SESIÓN =====
 window.loginAdmin = async function(email, password) {
     try {
         await signInWithEmailAndPassword(auth, email, password);
@@ -134,22 +227,22 @@ window.loginAdmin = async function(email, password) {
     }
 };
 
-// ===== 5. FUNCIÓN PARA CERRAR SESIÓN =====
+// ===== FUNCIÓN PARA CERRAR SESIÓN =====
 window.logoutAdmin = async function() {
     await signOut(auth);
     console.log("✅ Sesión cerrada");
 };
 
-// ===== 6. CREAR PANEL ADMIN Y BOTÓN FLOTANTE =====
-function crearPanelAdmin() {
-    // ELIMINAR PANEL ANTERIOR SI EXISTE
-    const panelExistente = document.getElementById('berkot-firebase-panel');
-    if (panelExistente) panelExistente.remove();
-    
+// ===== CREAR PANEL ADMIN Y BOTÓN FLOTANTE =====
+setTimeout(() => {
+    // ELIMINAR ELEMENTOS ANTERIORES
     const btnExistente = document.getElementById('btn-admin-berkot');
     if (btnExistente) btnExistente.remove();
     
-    // ===== BOTÓN FLOTANTE =====
+    const panelExistente = document.getElementById('panel-admin-berkot');
+    if (panelExistente) panelExistente.remove();
+    
+    // ===== BOTÓN ADMIN FLOTANTE =====
     const btnAdmin = document.createElement('button');
     btnAdmin.id = 'btn-admin-berkot';
     btnAdmin.innerHTML = '⚙️ Admin Panel';
@@ -167,28 +260,34 @@ function crearPanelAdmin() {
         cursor: pointer;
         z-index: 999999;
         box-shadow: 0 4px 15px rgba(255,160,0,0.5);
-        transition: transform 0.3s;
+        transition: transform 0.3s, box-shadow 0.3s;
     `;
-    btnAdmin.onmouseover = () => btnAdmin.style.transform = 'scale(1.05)';
-    btnAdmin.onmouseout = () => btnAdmin.style.transform = 'scale(1)';
+    btnAdmin.onmouseover = () => {
+        btnAdmin.style.transform = 'scale(1.05)';
+        btnAdmin.style.boxShadow = '0 8px 25px rgba(255,160,0,0.6)';
+    };
+    btnAdmin.onmouseout = () => {
+        btnAdmin.style.transform = 'scale(1)';
+        btnAdmin.style.boxShadow = '0 4px 15px rgba(255,160,0,0.5)';
+    };
     document.body.appendChild(btnAdmin);
     
     // ===== PANEL ADMIN =====
     const panel = document.createElement('div');
-    panel.id = 'berkot-firebase-panel';
+    panel.id = 'panel-admin-berkot';
     panel.style.cssText = `
         position: fixed;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
         width: 90%;
-        max-width: 550px;
+        max-width: 500px;
         max-height: 85vh;
         overflow-y: auto;
         background: white;
         padding: 25px;
         border-radius: 20px;
-        box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         z-index: 1000000;
         display: none;
         font-family: Arial, sans-serif;
@@ -209,7 +308,6 @@ function crearPanelAdmin() {
             ">&times;</button>
         </div>
         
-        <!-- SECCIÓN LOGIN -->
         <div id="login-section" style="
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 30px;
@@ -238,7 +336,6 @@ function crearPanelAdmin() {
             </p>
         </div>
         
-        <!-- SECCIÓN ADMIN (OCULTA INICIALMENTE) -->
         <div id="admin-section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3 style="color: #333;">➕ Agregar Producto</h3>
@@ -252,7 +349,6 @@ function crearPanelAdmin() {
                 ">Cerrar Sesión</button>
             </div>
             
-            <!-- FORMULARIO NUEVO PRODUCTO -->
             <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
                 <input type="text" id="product-name" placeholder="Nombre del producto" 
                        style="width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
@@ -285,8 +381,7 @@ function crearPanelAdmin() {
                 ">💾 Guardar Producto</button>
             </div>
             
-            <!-- LISTA DE PRODUCTOS -->
-            <h3 style="color: #333; margin-bottom: 15px;">📋 Productos en Tienda</h3>
+            <h3 style="color: #333; margin-bottom: 15px;">📋 Productos Actuales</h3>
             <div id="productos-lista" style="
                 max-height: 300px;
                 overflow-y: auto;
@@ -301,19 +396,15 @@ function crearPanelAdmin() {
     document.body.appendChild(panel);
     
     // ===== EVENTOS DEL PANEL =====
-    
-    // ABRIR PANEL
     btnAdmin.onclick = () => {
         panel.style.display = 'block';
         actualizarListaProductos();
     };
     
-    // CERRAR PANEL
     document.getElementById('cerrar-panel').onclick = () => {
         panel.style.display = 'none';
     };
     
-    // LOGIN
     document.getElementById('btn-login').onclick = async () => {
         const email = document.getElementById('admin-email').value;
         const password = document.getElementById('admin-password').value;
@@ -325,7 +416,6 @@ function crearPanelAdmin() {
         }
     };
     
-    // LOGOUT
     document.getElementById('btn-logout').onclick = async () => {
         await window.logoutAdmin();
         document.getElementById('login-section').style.display = 'block';
@@ -334,7 +424,6 @@ function crearPanelAdmin() {
         document.getElementById('admin-password').value = '';
     };
     
-    // GUARDAR PRODUCTO
     document.getElementById('btn-save').onclick = async () => {
         const nameInput = document.getElementById('product-name');
         const priceInput = document.getElementById('product-price');
@@ -360,19 +449,14 @@ function crearPanelAdmin() {
         };
         
         if (await window.guardarProducto(producto)) {
-            // LIMPIAR FORMULARIO
             nameInput.value = '';
             priceInput.value = '';
             document.getElementById('product-description').value = '';
-            
-            // ACTUALIZAR LISTA
             actualizarListaProductos();
-            
             alert("✅ Producto guardado exitosamente");
         }
     };
     
-    // FUNCIÓN PARA ACTUALIZAR LISTA DE PRODUCTOS
     function actualizarListaProductos() {
         const container = document.getElementById('productos-lista');
         if (!container) return;
@@ -395,7 +479,7 @@ function crearPanelAdmin() {
                     <div style="flex: 1;">
                         <strong style="font-size: 16px; color: #333;">${prod.name}</strong>
                         <div style="color: #27ae60; font-weight: bold; margin-top: 5px;">
-                            $${prod.basePrice.toFixed(2)} / ${prod.unit || 'lb'}
+                            $${prod.basePrice?.toFixed(2) || '0.00'} / ${prod.unit || 'lb'}
                         </div>
                         ${prod.description ? `<p style="color: #666; font-size: 13px; margin-top: 5px;">${prod.description.substring(0, 50)}${prod.description.length > 50 ? '...' : ''}</p>` : ''}
                     </div>
@@ -418,42 +502,35 @@ function crearPanelAdmin() {
         
         container.innerHTML = html;
     }
-}
-
-// ===== 7. INICIALIZAR TODO CUANDO CARGUE LA PÁGINA =====
-function iniciarBerkotFirebase() {
-    console.log("🚀 Inicializando Berkot Firebase...");
     
-    // CREAR PANEL ADMIN
-    setTimeout(() => {
-        try {
-            crearPanelAdmin();
-            console.log("✅ Panel admin creado exitosamente");
-        } catch (error) {
-            console.error("❌ Error creando panel admin:", error);
+    console.log("✅ Panel admin creado exitosamente");
+}, 1000);
+
+// ===== OCULTAR CONTRASEÑA VISIBLE EN LA PÁGINA =====
+setTimeout(() => {
+    document.querySelectorAll('*').forEach(el => {
+        if (el.innerHTML) {
+            el.innerHTML = el.innerHTML.replace(/berkot2026/gi, '••••••••');
+            el.innerHTML = el.innerHTML.replace(/Berkot2026Admin/gi, '••••••••');
+            el.innerHTML = el.innerHTML.replace(/admin@berkot\.com/gi, '••••@••••.com');
         }
-    }, 1000);
-    
-    console.log("✅ Berkot Firebase inicializado correctamente");
-}
+    });
+}, 500);
 
-// ===== 8. EJECUTAR INICIALIZACIÓN =====
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', iniciarBerkotFirebase);
-} else {
-    setTimeout(iniciarBerkotFirebase, 500);
-}
+// ===== INICIALIZAR =====
+console.log("🚀 Inicializando Berkot Firebase...");
+console.log("✅ Berkot Firebase inicializado correctamente");
+console.log("🔥 Sistema Berkot Firebase listo y funcionando!");
+console.log("✅ Credenciales configuradas correctamente");
+console.log("📍 Base de datos:", firebaseConfig.databaseURL);
 
-// ===== 9. EXPORTAR FUNCIONES PARA USO GLOBAL =====
+// ===== EXPORTAR FUNCIONES =====
 window.BERKOT_FIREBASE = {
     db,
     auth,
     guardarProducto: window.guardarProducto,
     eliminarProducto: window.eliminarProducto,
     loginAdmin: window.loginAdmin,
-    logoutAdmin: window.logoutAdmin
+    logoutAdmin: window.logoutAdmin,
+    mostrarProductos: mostrarProductosEnPagina
 };
-
-console.log("🔥 Sistema Berkot Firebase listo y funcionando!");
-console.log("✅ Credenciales configuradas correctamente");
-console.log("📍 Base de datos:", firebaseConfig.databaseURL);
