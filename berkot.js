@@ -512,6 +512,12 @@ function inicializar() {
     crearBotonCarrito();
     crearBotonAdmin();
     configurarWhatsApp();
+
+     // 🔴 FORZAR QUE LOS PRODUCTOS APAREZCAN 🔴
+    setTimeout(() => {
+        console.log("🔄 Forzando carga de productos...");
+        mostrarProductos();
+    }, 500);
     
     console.log("✅ Sistema inicializado correctamente");
 }
