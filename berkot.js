@@ -1,570 +1,459 @@
-// ========== BERKOT ULTIMATE - VERSIÓN CORREGIDA FINAL ==========
-console.log("🚀 Berkot Ultimate - Sistema completo iniciando...");
+// ========== BERKOT FIREBASE - VERSIÓN DEFINITIVA FUNCIONAL ==========
+// ========== CONFIGURADO CON TUS CREDENCIALES ==========
 
-// ===== ESTILOS ADMIN =====
-(function agregarEstilos() {
-    const estilos = document.createElement('style');
-    estilos.textContent = `
-        .admin-input, .admin-select, .admin-textarea {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-top: 5px;
-            font-size: 14px;
-        }
-        .admin-input:focus, .admin-select:focus, .admin-textarea:focus {
-            border-color: #3498db;
-            outline: none;
-        }
-        .admin-btn {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            transition: opacity 0.3s;
-        }
-        .admin-btn:hover {
-            opacity: 0.9;
-        }
-        @keyframes slideInRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slideOutRight {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
-    `;
-    document.head.appendChild(estilos);
-})();
+console.log("🔥 BERKOT FIREBASE - Iniciando sistema...");
 
-// ===== CONFIGURACIÓN =====
-// 🔴 ¡PON TUS DATOS REALES AQUÍ! 🔴
-const BERKOT_ULTIMATE = {
-    BIN_ID: "698bb5e6d0ea881f40b08b3f",     // ← TU BIN_ID REAL
-    ACCESS_KEY: "$2a$10$kCE3/fq2JB928OPxvj1tlOPvv9VQf4.NmndkYnXaJ3oda7obH4.lm",      // ← TU ACCESS_KEY REAL
-    PASSWORD: "BerkotAdmin2026",            // ← CAMBIA ESTA CONTRASEÑA
+// ===== 🔴 TUS CREDENCIALES DE FIREBASE (YA CONFIGURADAS) 🔴 =====
+const firebaseConfig = {
+    apiKey: "AIzaSyBLNbTI1YrKVb1iA7YxTSSYRVCh3DiJHEY",
+    authDomain: "berkot-nn-9938d.firebaseapp.com",
+    databaseURL: "https://berkot-nn-9938d-default-rtdb.firebaseio.com",
+    projectId: "berkot-nn-9938d",
+    storageBucket: "berkot-nn-9938d.firebasestorage.app",
+    messagingSenderId: "528237886603",
+    appId: "1:528237886603:web:8dd8a703f101ed0a7d288e",
+    measurementId: "G-RJ9F7GR7GP"
+};
+
+// ===== IMPORTAR FIREBASE DESDE CDN =====
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, onValue, push, set, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+// ===== INICIALIZAR FIREBASE =====
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth(app);
+
+// ===== VARIABLE GLOBAL DE PRODUCTOS =====
+window.storeData = window.storeData || { products: [] };
+
+// ===== 1. ESCUCHAR CAMBIOS EN TIEMPO REAL =====
+const productosRef = ref(db, 'productos');
+
+onValue(productosRef, (snapshot) => {
+    const productos = snapshot.val();
     
-    datosLocales: null,
-    
-    PLANTILLA_PRODUCTO: {
-        id: null,
-        name: "Nuevo Producto",
-        description: "",
-        basePrice: 1.00,
-        unit: "lb",
-        minQty: 0.5,
-        icon: "fa-box",
-        badge: "",
-        available: true
-    },
-    
-    obtenerDatos() {
-        if (window.storeData) {
-            this.datosLocales = window.storeData;
-            return this.datosLocales;
+    if (productos) {
+        window.storeData.products = Object.keys(productos).map(key => ({
+            id: key,
+            name: productos[key].name || "Producto",
+            basePrice: productos[key].basePrice || 0,
+            description: productos[key].description || "",
+            unit: productos[key].unit || "lb",
+            minQty: productos[key].minQty || 0.5,
+            available: productos[key].available !== false,
+            icon: productos[key].icon || "fa-box"
+        }));
+        
+        console.log(`✅ ${window.storeData.products.length} productos cargados desde Firebase`);
+        
+        // ACTUALIZAR LA INTERFAZ SI EXISTEN LAS FUNCIONES
+        if (typeof window.renderProducts === 'function') {
+            window.renderProducts();
+        }
+        if (typeof window.actualizarInterfaz === 'function') {
+            window.actualizarInterfaz();
+        }
+        if (typeof window.cargarListaProductosAdmin === 'function') {
+            window.cargarListaProductosAdmin();
         }
         
-        const datosLocal = localStorage.getItem('berkot_ultimate_data');
-        if (datosLocal) {
-            try {
-                this.datosLocales = JSON.parse(datosLocal);
-                return this.datosLocales;
-            } catch (e) {}
-        }
-        
-        this.datosLocales = {
-            storeName: "Berkot",
-            storePhone: "+5356603249",
-            storeHours: "8:00 AM - 6:00 PM",
-            welcomeMessage: "Tu tienda de confianza",
-            products: []
-        };
-        
-        return this.datosLocales;
-    },
-    
-    async cargarDeNube() {
-        try {
-            const url = `https://api.jsonbin.io/v3/b/${this.BIN_ID}/latest`;
-            const res = await fetch(url, {
-                headers: { "X-Access-Key": this.ACCESS_KEY }
+        // DISPARAR EVENTO PERSONALIZADO
+        window.dispatchEvent(new CustomEvent('firebase-productos-actualizados', { 
+            detail: window.storeData.products 
+        }));
+    }
+}, (error) => {
+    console.error("❌ Error cargando productos:", error);
+});
+
+// ===== 2. FUNCIÓN PARA GUARDAR PRODUCTO =====
+window.guardarProducto = async function(producto) {
+    try {
+        if (!producto.id) {
+            // NUEVO PRODUCTO
+            const newRef = push(productosRef);
+            producto.id = newRef.key;
+            await set(newRef, {
+                name: producto.name || "Nuevo Producto",
+                basePrice: producto.basePrice || 1.00,
+                description: producto.description || "",
+                unit: producto.unit || "lb",
+                minQty: producto.minQty || 0.5,
+                available: producto.available !== false,
+                icon: producto.icon || "fa-box"
             });
-            if (res.ok) {
-                const data = await res.json();
-                return data.record;
-            }
-        } catch (e) {}
-        return null;
-    },
-    
-    async guardarEnNube(datos, pedirPass = true) {
-        if (pedirPass) {
-            const pass = prompt("🔐 Contraseña admin:");
-            if (pass !== this.PASSWORD) {
-                alert("❌ Contraseña incorrecta");
-                return false;
-            }
+        } else {
+            // ACTUALIZAR PRODUCTO EXISTENTE
+            await set(ref(db, `productos/${producto.id}`), {
+                name: producto.name,
+                basePrice: producto.basePrice,
+                description: producto.description || "",
+                unit: producto.unit || "lb",
+                minQty: producto.minQty || 0.5,
+                available: producto.available !== false,
+                icon: producto.icon || "fa-box"
+            });
         }
         
-        try {
-            const url = `https://api.jsonbin.io/v3/b/${this.BIN_ID}`;
-            const res = await fetch(url, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-Access-Key": this.ACCESS_KEY,
-                    "X-Bin-Versioning": "false"
-                },
-                body: JSON.stringify(datos)
-            });
-            
-            if (res.ok) {
-                this.mostrarNotificacion(`✅ ${datos.products?.length || 0} productos guardados`, "success");
-                return true;
-            }
-        } catch (e) {}
+        console.log("✅ Producto guardado:", producto.name);
+        return true;
+    } catch (error) {
+        console.error("❌ Error guardando producto:", error);
+        alert("❌ Error al guardar: " + error.message);
         return false;
-    },
-    
-    async sincronizarInteligente() {
-        const locales = this.obtenerDatos();
-        const nube = await this.cargarDeNube();
-        
-        if (!nube) {
-            await this.guardarEnNube(locales, false);
-            return locales;
-        }
-        
-        const fusionados = { ...locales };
-        fusionados.products = [...(locales.products || [])];
-        
-        nube.products?.forEach(prodNube => {
-            if (!fusionados.products.find(p => p.id === prodNube.id)) {
-                fusionados.products.push(prodNube);
-            }
-        });
-        
-        localStorage.setItem('berkot_ultimate_data', JSON.stringify(fusionados));
-        if (window.storeData) window.storeData = fusionados;
-        
-        await this.guardarEnNube(fusionados, false);
-        return fusionados;
-    },
-    
-    async forzarSubidaCompleta() {
-        const datos = this.obtenerDatos();
-        this.mostrarNotificacion(`📦 Subiendo ${datos.products?.length || 0} productos...`, "info");
-        return await this.guardarEnNube(datos, true);
-    },
-    
-    añadirProducto() {
-        const datos = this.obtenerDatos();
-        const nuevo = {
-            ...this.PLANTILLA_PRODUCTO,
-            id: Date.now().toString(),
-            name: `Producto ${(datos.products?.length || 0) + 1}`
-        };
-        
-        if (!datos.products) datos.products = [];
-        datos.products.push(nuevo);
-        
-        localStorage.setItem('berkot_ultimate_data', JSON.stringify(datos));
-        if (window.storeData) window.storeData = datos;
-        
-        this.mostrarNotificacion("✅ Producto añadido", "success");
-        this.guardarEnNube(datos, false);
-        return nuevo;
-    },
-    
-    actualizarProducto(index, campo, valor) {
-        const datos = this.obtenerDatos();
-        if (!datos.products?.[index]) return;
-        
-        datos.products[index][campo] = valor;
-        localStorage.setItem('berkot_ultimate_data', JSON.stringify(datos));
-        if (window.storeData) window.storeData = datos;
-        
-        clearTimeout(this.debounceTimer);
-        this.debounceTimer = setTimeout(() => {
-            this.guardarEnNube(datos, false);
-        }, 1000);
-    },
-    
-    eliminarProducto(index) {
-        const datos = this.obtenerDatos();
-        if (!datos.products?.[index]) return;
-        
-        const nombre = datos.products[index].name;
-        if (!confirm(`¿Eliminar "${nombre}"?`)) return;
-        
-        datos.products.splice(index, 1);
-        localStorage.setItem('berkot_ultimate_data', JSON.stringify(datos));
-        if (window.storeData) window.storeData = datos;
-        
-        this.mostrarNotificacion(`🗑️ ${nombre} eliminado`, "success");
-        this.guardarEnNube(datos, false);
-    },
-    
-    editarProductoPrompt(index) {
-        const datos = this.obtenerDatos();
-        const producto = datos.products?.[index];
-        if (!producto) return;
-        
-        const nuevoNombre = prompt("Nuevo nombre del producto:", producto.name);
-        if (nuevoNombre?.trim()) {
-            this.actualizarProducto(index, 'name', nuevoNombre.trim());
-            if (typeof cargarListaProductosAdmin === 'function') cargarListaProductosAdmin();
-            if (typeof actualizarInterfaz === 'function') actualizarInterfaz();
-        }
-    },
-    
-    mostrarNotificacion(mensaje, tipo = "info", tiempo = 4000) {
-        let contenedor = document.getElementById('berkot-notificaciones');
-        if (!contenedor) {
-            contenedor = document.createElement('div');
-            contenedor.id = 'berkot-notificaciones';
-            contenedor.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 99999;
-                max-width: 400px;
-            `;
-            document.body.appendChild(contenedor);
-        }
-        
-        const noti = document.createElement('div');
-        noti.style.cssText = `
-            background: ${tipo === 'success' ? '#27ae60' : 
-                         tipo === 'error' ? '#e74c3c' : 
-                         tipo === 'warning' ? '#f39c12' : '#3498db'};
-            color: white;
-            padding: 15px 20px;
-            margin-bottom: 10px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            animation: slideInRight 0.3s ease;
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-        `;
-        
-        const icono = tipo === 'success' ? 'check-circle' :
-                     tipo === 'error' ? 'exclamation-circle' :
-                     tipo === 'warning' ? 'exclamation-triangle' : 'info-circle';
-        
-        noti.innerHTML = `<i class="fas fa-${icono}"></i> ${mensaje}`;
-        contenedor.appendChild(noti);
-        
-        setTimeout(() => {
-            noti.style.animation = 'slideOutRight 0.3s ease';
-            setTimeout(() => noti.remove(), 300);
-        }, tiempo);
     }
 };
 
-// ===== FUNCIONES DE INTERFAZ =====
-function actualizarInterfaz() {
-    if (window.applyStoreData) try { window.applyStoreData(); } catch(e) {}
-    if (window.renderProducts) try { window.renderProducts(); } catch(e) {}
-}
-
-// ===== CARGAR LISTA DE PRODUCTOS =====
-function cargarListaProductosAdmin() {
-    const contenedor = document.getElementById('lista-productos-admin');
-    if (!contenedor) return;
+// ===== 3. FUNCIÓN PARA ELIMINAR PRODUCTO =====
+window.eliminarProducto = async function(id) {
+    if (!confirm("¿Estás seguro de eliminar este producto?")) return false;
     
-    const datos = BERKOT_ULTIMATE.obtenerDatos();
-    
-    if (!datos.products?.length) {
-        contenedor.innerHTML = `
-            <div style="text-align: center; padding: 20px; color: #666;">
-                <i class="fas fa-box-open" style="font-size: 40px; margin-bottom: 10px;"></i>
-                <p>No hay productos aún</p>
-            </div>
-        `;
-        return;
+    try {
+        await remove(ref(db, `productos/${id}`));
+        console.log("✅ Producto eliminado");
+        return true;
+    } catch (error) {
+        console.error("❌ Error eliminando producto:", error);
+        alert("❌ Error al eliminar: " + error.message);
+        return false;
     }
-    
-    contenedor.innerHTML = '';
-    
-    datos.products.forEach((producto, index) => {
-        const div = document.createElement('div');
-        div.className = 'admin-product-card';
-        div.style.cssText = `
-            border: 1px solid #ddd;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            background: white;
-        `;
-        
-        div.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
-                <div>
-                    <strong style="color: #2c3e50;">${producto.name || 'Sin nombre'}</strong>
-                    <div style="font-size: 12px; color: #666;">
-                        ID: ${producto.id} | Precio: $${producto.basePrice || '0.00'}
-                    </div>
-                </div>
-                <div style="display: flex; gap: 5px;">
-                    <button onclick="BERKOT_ULTIMATE.editarProductoPrompt(${index})" 
-                            style="background: #3498db; color: white; border: none; width: 30px; height: 30px; border-radius: 5px; cursor: pointer;">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button onclick="BERKOT_ULTIMATE.eliminarProducto(${index})" 
-                            style="background: #e74c3c; color: white; border: none; width: 30px; height: 30px; border-radius: 5px; cursor: pointer;">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
-                <div>
-                    <label style="font-size: 12px; color: #666;">Nombre</label>
-                    <input type="text" class="admin-input" value="${producto.name || ''}" 
-                           onchange="BERKOT_ULTIMATE.actualizarProducto(${index}, 'name', this.value)">
-                </div>
-                <div>
-                    <label style="font-size: 12px; color: #666;">Precio ($)</label>
-                    <input type="number" step="0.01" class="admin-input" value="${producto.basePrice || 0}" 
-                           onchange="BERKOT_ULTIMATE.actualizarProducto(${index}, 'basePrice', parseFloat(this.value))">
-                </div>
-                <div>
-                    <label style="font-size: 12px; color: #666;">Unidad</label>
-                    <select class="admin-select" onchange="BERKOT_ULTIMATE.actualizarProducto(${index}, 'unit', this.value)">
-                        <option value="lb" ${producto.unit === 'lb' ? 'selected' : ''}>Libras</option>
-                        <option value="kg" ${producto.unit === 'kg' ? 'selected' : ''}>Kilogramos</option>
-                        <option value="onz" ${producto.unit === 'onz' ? 'selected' : ''}>Onzas</option>
-                        <option value="unidad" ${producto.unit === 'unidad' ? 'selected' : ''}>Unidades</option>
-                    </select>
-                </div>
-                <div>
-                    <label style="font-size: 12px; color: #666;">Mínimo</label>
-                    <input type="number" step="0.01" class="admin-input" value="${producto.minQty || 0.5}" 
-                           onchange="BERKOT_ULTIMATE.actualizarProducto(${index}, 'minQty', parseFloat(this.value))">
-                </div>
-            </div>
-            
-            <div style="margin-top: 10px;">
-                <label style="font-size: 12px; color: #666;">Descripción</label>
-                <textarea class="admin-textarea" 
-                          onchange="BERKOT_ULTIMATE.actualizarProducto(${index}, 'description', this.value)"
-                          style="width: 100%; min-height: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">${producto.description || ''}</textarea>
-            </div>
-            
-            <div style="display: flex; gap: 20px; margin-top: 10px;">
-                <label style="display: flex; align-items: center; gap: 5px; font-size: 12px;">
-                    <input type="checkbox" ${producto.available !== false ? 'checked' : ''} 
-                           onchange="BERKOT_ULTIMATE.actualizarProducto(${index}, 'available', this.checked)">
-                    Disponible
-                </label>
-                <label style="display: flex; align-items: center; gap: 5px; font-size: 12px;">
-                    <input type="text" class="admin-input" value="${producto.icon || 'fa-box'}" 
-                           onchange="BERKOT_ULTIMATE.actualizarProducto(${index}, 'icon', this.value)" 
-                           placeholder="fa-icon" style="width: 100px;">
-                    Icono
-                </label>
-            </div>
-        `;
-        
-        contenedor.appendChild(div);
-    });
-}
+};
 
-// ===== PANEL ADMIN =====
-function integrarPanelAdmin() {
-    const intervalo = setInterval(() => {
-        const panelAdmin = document.getElementById('adminPanel');
-        if (panelAdmin) {
-            clearInterval(intervalo);
-            
-            const seccion = document.createElement('div');
-            seccion.className = 'admin-section';
-            seccion.innerHTML = `
-                <h3 class="section-title">
-                    <i class="fas fa-cloud"></i> Berkot Ultimate - Gestión de Productos
-                </h3>
-                
-                <div id="lista-productos-admin" style="margin-bottom: 20px;"></div>
-                
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0;">
-                    <button id="btn-ultimate-nuevo" class="admin-btn" style="background: #27ae60;">
-                        <i class="fas fa-plus"></i> Nuevo Producto
-                    </button>
-                    <button id="btn-ultimate-sincronizar" class="admin-btn" style="background: #3498db;">
-                        <i class="fas fa-sync"></i> Sincronizar
-                    </button>
-                    <button id="btn-ultimate-forzar" class="admin-btn" style="background: #e74c3c;">
-                        <i class="fas fa-cloud-upload-alt"></i> FORZAR SUBIDA
-                    </button>
-                </div>
-                
-                <div style="font-size: 12px; color: #666; text-align: center; margin-top: 10px;">
-                    <i class="fas fa-info-circle"></i> Los cambios se guardan automáticamente en la nube
-                </div>
-            `;
-            
-            panelAdmin.insertBefore(seccion, panelAdmin.firstChild);
-            
-            document.getElementById('btn-ultimate-nuevo').onclick = () => {
-                BERKOT_ULTIMATE.añadirProducto();
-                cargarListaProductosAdmin();
-                actualizarInterfaz();
-            };
-            
-            document.getElementById('btn-ultimate-sincronizar').onclick = async () => {
-                await BERKOT_ULTIMATE.sincronizarInteligente();
-                cargarListaProductosAdmin();
-                actualizarInterfaz();
-            };
-            
-            document.getElementById('btn-ultimate-forzar').onclick = async () => {
-                if (confirm("⚠️ ¿FORZAR SUBIDA? Esto SOBREESCRIBIRÁ la nube con TODOS tus productos actuales.")) {
-                    await BERKOT_ULTIMATE.forzarSubidaCompleta();
-                }
-            };
-            
-            cargarListaProductosAdmin();
-        }
-    }, 1000);
-}
+// ===== 4. FUNCIÓN PARA INICIAR SESIÓN =====
+window.loginAdmin = async function(email, password) {
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+        console.log("✅ Sesión iniciada:", email);
+        return true;
+    } catch (error) {
+        console.error("❌ Error de login:", error);
+        alert("❌ Email o contraseña incorrectos");
+        return false;
+    }
+};
 
-// ===== PANEL FLOTANTE =====
-function crearPanelControl() {
-    const panel = document.createElement('div');
-    panel.id = 'berkot-ultimate-panel';
-    panel.style.cssText = `
+// ===== 5. FUNCIÓN PARA CERRAR SESIÓN =====
+window.logoutAdmin = async function() {
+    await signOut(auth);
+    console.log("✅ Sesión cerrada");
+};
+
+// ===== 6. CREAR PANEL ADMIN Y BOTÓN FLOTANTE =====
+function crearPanelAdmin() {
+    // ELIMINAR PANEL ANTERIOR SI EXISTE
+    const panelExistente = document.getElementById('berkot-firebase-panel');
+    if (panelExistente) panelExistente.remove();
+    
+    const btnExistente = document.getElementById('btn-admin-berkot');
+    if (btnExistente) btnExistente.remove();
+    
+    // ===== BOTÓN FLOTANTE =====
+    const btnAdmin = document.createElement('button');
+    btnAdmin.id = 'btn-admin-berkot';
+    btnAdmin.innerHTML = '⚙️ Admin Panel';
+    btnAdmin.style.cssText = `
         position: fixed;
         bottom: 20px;
-        left: 20px;
-        background: linear-gradient(145deg, #2c3e50, #34495e);
+        right: 20px;
+        padding: 15px 30px;
+        background: #FFA000;
         color: white;
-        padding: 15px;
-        border-radius: 15px;
-        z-index: 9998;
+        border: none;
+        border-radius: 50px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        z-index: 999999;
+        box-shadow: 0 4px 15px rgba(255,160,0,0.5);
+        transition: transform 0.3s;
+    `;
+    btnAdmin.onmouseover = () => btnAdmin.style.transform = 'scale(1.05)';
+    btnAdmin.onmouseout = () => btnAdmin.style.transform = 'scale(1)';
+    document.body.appendChild(btnAdmin);
+    
+    // ===== PANEL ADMIN =====
+    const panel = document.createElement('div');
+    panel.id = 'berkot-firebase-panel';
+    panel.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 90%;
+        max-width: 550px;
+        max-height: 85vh;
+        overflow-y: auto;
+        background: white;
+        padding: 25px;
+        border-radius: 20px;
+        box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+        z-index: 1000000;
+        display: none;
         font-family: Arial, sans-serif;
-        font-size: 13px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        min-width: 250px;
-        border: 2px solid #3498db;
     `;
     
     panel.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-            <i class="fas fa-crown" style="color: #f1c40f; font-size: 20px;"></i>
-            <strong style="font-size: 16px;">Berkot Ultimate</strong>
-            <span style="margin-left: auto; background: #27ae60; padding: 3px 10px; border-radius: 20px; font-size: 11px;">
-                ONLINE
-            </span>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="color: #FFA000; margin: 0; font-size: 24px;">
+                🔥 Berkot Admin
+            </h2>
+            <button id="cerrar-panel" style="
+                background: none;
+                border: none;
+                font-size: 28px;
+                cursor: pointer;
+                color: #666;
+                padding: 0 10px;
+            ">&times;</button>
         </div>
-        <div style="margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 10px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                <span><i class="fas fa-box"></i> Productos:</span>
-                <span id="ultimate-contador" style="font-weight: bold; color: #f1c40f;">0</span>
-            </div>
-            <div style="display: flex; justify-content: space-between;">
-                <span><i class="fas fa-cloud"></i> Nube:</span>
-                <span id="ultimate-estado" style="color: #2ecc71;">Conectado</span>
-            </div>
+        
+        <!-- SECCIÓN LOGIN -->
+        <div id="login-section" style="
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            border-radius: 15px;
+            color: white;
+        ">
+            <h3 style="margin-top: 0; color: white;">🔐 Acceso Administrador</h3>
+            <input type="email" id="admin-email" placeholder="Correo electrónico" 
+                   style="width: 100%; padding: 12px; margin-bottom: 15px; border: none; border-radius: 8px; font-size: 14px;">
+            <input type="password" id="admin-password" placeholder="Contraseña" 
+                   style="width: 100%; padding: 12px; margin-bottom: 15px; border: none; border-radius: 8px; font-size: 14px;">
+            <button id="btn-login" style="
+                width: 100%;
+                padding: 12px;
+                background: white;
+                color: #764ba2;
+                border: none;
+                border-radius: 8px;
+                font-size: 16px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: transform 0.2s;
+            ">Iniciar Sesión</button>
+            <p style="margin-top: 15px; font-size: 12px; opacity: 0.9; text-align: center;">
+                Usa: admin@berkot.com / Berkot2026Admin
+            </p>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <button id="panel-sync" style="padding: 10px; background: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer;">
-                <i class="fas fa-sync"></i> Sinc
-            </button>
-            <button id="panel-add" style="padding: 10px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer;">
-                <i class="fas fa-plus"></i> Añadir
-            </button>
-            <button id="panel-force" style="padding: 10px; background: #e74c3c; color: white; border: none; border-radius: 8px; cursor: pointer; grid-column: span 2;">
-                <i class="fas fa-cloud-upload-alt"></i> FORZAR SUBIDA A NUBE
-            </button>
+        
+        <!-- SECCIÓN ADMIN (OCULTA INICIALMENTE) -->
+        <div id="admin-section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="color: #333;">➕ Agregar Producto</h3>
+                <button id="btn-logout" style="
+                    padding: 8px 16px;
+                    background: #e74c3c;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                ">Cerrar Sesión</button>
+            </div>
+            
+            <!-- FORMULARIO NUEVO PRODUCTO -->
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                <input type="text" id="product-name" placeholder="Nombre del producto" 
+                       style="width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                    <input type="number" id="product-price" placeholder="Precio" step="0.01"
+                           style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+                    <select id="product-unit" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+                        <option value="lb">Libras (lb)</option>
+                        <option value="kg">Kilogramos (kg)</option>
+                        <option value="unidad">Unidad</option>
+                        <option value="oz">Onzas (oz)</option>
+                    </select>
+                </div>
+                
+                <textarea id="product-description" placeholder="Descripción del producto" rows="3"
+                          style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; resize: vertical;"></textarea>
+                
+                <button id="btn-save" style="
+                    width: 100%;
+                    padding: 14px;
+                    background: #27ae60;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-size: 16px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    transition: background 0.3s;
+                ">💾 Guardar Producto</button>
+            </div>
+            
+            <!-- LISTA DE PRODUCTOS -->
+            <h3 style="color: #333; margin-bottom: 15px;">📋 Productos en Tienda</h3>
+            <div id="productos-lista" style="
+                max-height: 300px;
+                overflow-y: auto;
+                border: 1px solid #eee;
+                border-radius: 10px;
+                padding: 15px;
+                background: #fafafa;
+            "></div>
         </div>
     `;
     
     document.body.appendChild(panel);
     
-    document.getElementById('panel-sync').onclick = async () => {
-        await BERKOT_ULTIMATE.sincronizarInteligente();
-        cargarListaProductosAdmin();
-        actualizarInterfaz();
+    // ===== EVENTOS DEL PANEL =====
+    
+    // ABRIR PANEL
+    btnAdmin.onclick = () => {
+        panel.style.display = 'block';
+        actualizarListaProductos();
     };
     
-    document.getElementById('panel-add').onclick = () => {
-        BERKOT_ULTIMATE.añadirProducto();
-        cargarListaProductosAdmin();
-        actualizarInterfaz();
+    // CERRAR PANEL
+    document.getElementById('cerrar-panel').onclick = () => {
+        panel.style.display = 'none';
     };
     
-    document.getElementById('panel-force').onclick = async () => {
-        if (confirm("⚠️ ¿FORZAR SUBIDA COMPLETA? Esto reemplazará TODOS los productos en la nube.")) {
-            await BERKOT_ULTIMATE.forzarSubidaCompleta();
+    // LOGIN
+    document.getElementById('btn-login').onclick = async () => {
+        const email = document.getElementById('admin-email').value;
+        const password = document.getElementById('admin-password').value;
+        
+        if (await window.loginAdmin(email, password)) {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('admin-section').style.display = 'block';
+            actualizarListaProductos();
         }
     };
     
-    function actualizarPanel() {
-        const datos = BERKOT_ULTIMATE.obtenerDatos();
-        const contador = document.getElementById('ultimate-contador');
-        if (contador) contador.textContent = datos.products?.length || 0;
-    }
+    // LOGOUT
+    document.getElementById('btn-logout').onclick = async () => {
+        await window.logoutAdmin();
+        document.getElementById('login-section').style.display = 'block';
+        document.getElementById('admin-section').style.display = 'none';
+        document.getElementById('admin-email').value = '';
+        document.getElementById('admin-password').value = '';
+    };
     
-    setInterval(actualizarPanel, 2000);
-    actualizarPanel();
-}
-
-// ===== VERIFICAR CONFIGURACIÓN =====
-function verificarConfiguracion() {
-    if (BERKOT_ULTIMATE.BIN_ID === "TU_BIN_ID_AQUI" || 
-        BERKOT_ULTIMATE.ACCESS_KEY === "TU_ACCESS_KEY_AQUI" ||
-        BERKOT_ULTIMATE.BIN_ID.includes("TU_")) {
-        console.warn("⚠️ Configura tus credenciales de JSONBin.io en berkot.js");
-        setTimeout(() => {
-            BERKOT_ULTIMATE.mostrarNotificacion?.("⚠️ Configura tus credenciales en berkot.js", "warning", 10000);
-        }, 2000);
-    }
-}
-
-// ===== OCULTAR CONTRASEÑA =====
-setTimeout(function() {
-    document.querySelectorAll('div, span, p, label, td, th, h1, h2, h3, h4').forEach(el => {
-        if (el.innerHTML) {
-            el.innerHTML = el.innerHTML.replace(/berkot2026/gi, '••••••••');
-            el.innerHTML = el.innerHTML.replace(/Berkot2026/gi, '••••••••');
-            el.innerHTML = el.innerHTML.replace(/Contraseña:.*?(<br>|$)/gi, '');
+    // GUARDAR PRODUCTO
+    document.getElementById('btn-save').onclick = async () => {
+        const nameInput = document.getElementById('product-name');
+        const priceInput = document.getElementById('product-price');
+        
+        if (!nameInput.value.trim()) {
+            alert("❌ Por favor ingresa un nombre para el producto");
+            return;
         }
-    });
-}, 500);
-
-// ===== INICIALIZAR =====
-async function iniciarBerkotUltimate() {
-    console.log("🎯 Iniciando Berkot Ultimate...");
+        
+        if (!priceInput.value || parseFloat(priceInput.value) <= 0) {
+            alert("❌ Por favor ingresa un precio válido");
+            return;
+        }
+        
+        const producto = {
+            name: nameInput.value.trim(),
+            basePrice: parseFloat(priceInput.value),
+            unit: document.getElementById('product-unit').value,
+            description: document.getElementById('product-description').value.trim(),
+            available: true,
+            minQty: 0.5,
+            icon: "fa-box"
+        };
+        
+        if (await window.guardarProducto(producto)) {
+            // LIMPIAR FORMULARIO
+            nameInput.value = '';
+            priceInput.value = '';
+            document.getElementById('product-description').value = '';
+            
+            // ACTUALIZAR LISTA
+            actualizarListaProductos();
+            
+            alert("✅ Producto guardado exitosamente");
+        }
+    };
     
-    crearPanelControl();
-    integrarPanelAdmin();
-    
-    setTimeout(async () => {
-        await BERKOT_ULTIMATE.sincronizarInteligente();
-        actualizarInterfaz();
-        console.log("✅ Sincronización inicial completada");
-    }, 1500);
-    
-    window.BERKOT_ULTIMATE = BERKOT_ULTIMATE;
-    console.log("✅ Berkot Ultimate inicializado correctamente");
+    // FUNCIÓN PARA ACTUALIZAR LISTA DE PRODUCTOS
+    function actualizarListaProductos() {
+        const container = document.getElementById('productos-lista');
+        if (!container) return;
+        
+        if (!window.storeData.products || window.storeData.products.length === 0) {
+            container.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">📭 No hay productos disponibles</p>';
+            return;
+        }
+        
+        let html = '';
+        window.storeData.products.forEach(prod => {
+            html += `
+                <div style="
+                    border-bottom: 1px solid #eee;
+                    padding: 15px 0;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                ">
+                    <div style="flex: 1;">
+                        <strong style="font-size: 16px; color: #333;">${prod.name}</strong>
+                        <div style="color: #27ae60; font-weight: bold; margin-top: 5px;">
+                            $${prod.basePrice.toFixed(2)} / ${prod.unit || 'lb'}
+                        </div>
+                        ${prod.description ? `<p style="color: #666; font-size: 13px; margin-top: 5px;">${prod.description.substring(0, 50)}${prod.description.length > 50 ? '...' : ''}</p>` : ''}
+                    </div>
+                    <button onclick="eliminarProducto('${prod.id}')" style="
+                        background: #e74c3c;
+                        color: white;
+                        border: none;
+                        padding: 8px 15px;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 13px;
+                        margin-left: 10px;
+                        transition: background 0.3s;
+                    " onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">
+                        🗑️ Eliminar
+                    </button>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
 }
 
-// ===== EJECUTAR =====
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        iniciarBerkotUltimate();
-        verificarConfiguracion();
-    });
-} else {
+// ===== 7. INICIALIZAR TODO CUANDO CARGUE LA PÁGINA =====
+function iniciarBerkotFirebase() {
+    console.log("🚀 Inicializando Berkot Firebase...");
+    
+    // CREAR PANEL ADMIN
     setTimeout(() => {
-        iniciarBerkotUltimate();
-        verificarConfiguracion();
-    }, 500);
+        try {
+            crearPanelAdmin();
+            console.log("✅ Panel admin creado exitosamente");
+        } catch (error) {
+            console.error("❌ Error creando panel admin:", error);
+        }
+    }, 1000);
+    
+    console.log("✅ Berkot Firebase inicializado correctamente");
 }
 
-console.log("👑 Berkot Ultimate - Versión Corregida Final Cargada");
+// ===== 8. EJECUTAR INICIALIZACIÓN =====
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', iniciarBerkotFirebase);
+} else {
+    setTimeout(iniciarBerkotFirebase, 500);
+}
+
+// ===== 9. EXPORTAR FUNCIONES PARA USO GLOBAL =====
+window.BERKOT_FIREBASE = {
+    db,
+    auth,
+    guardarProducto: window.guardarProducto,
+    eliminarProducto: window.eliminarProducto,
+    loginAdmin: window.loginAdmin,
+    logoutAdmin: window.logoutAdmin
+};
+
+console.log("🔥 Sistema Berkot Firebase listo y funcionando!");
+console.log("✅ Credenciales configuradas correctamente");
+console.log("📍 Base de datos:", firebaseConfig.databaseURL);
