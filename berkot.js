@@ -1,7 +1,7 @@
-// ========== BERKOT FIREBASE - VERSIÓN DEFINITIVA ==========
-// ========== SOLUCIÓN 3 - WHATSAPP ENVÍA PEDIDO COMPLETO ==========
+// ========== BERKOT FIREBASE - VERSIÓN PROFESIONAL FINAL ==========
+// ========== WHATSAPP + GUARDAR INFORMACIÓN 100% FUNCIONAL ==========
 
-console.log("🔥 BERKOT - INICIANDO SISTEMA DEFINITIVO");
+console.log("🔥 BERKOT - SISTEMA PROFESIONAL INICIADO");
 
 // ===== CONFIGURACIÓN FIREBASE =====
 const firebaseConfig = {
@@ -29,17 +29,15 @@ console.log("✅ Firebase conectado");
 window.productos = [];
 let carrito = JSON.parse(localStorage.getItem('berkot_carrito')) || [];
 let usuarioActual = null;
+let clienteInfo = JSON.parse(localStorage.getItem('cliente_info')) || {};
 
-// ===== 1. LIMPIEZA TOTAL DE LA PÁGINA =====
+// ===== 1. LIMPIEZA TOTAL =====
 function limpiezaTotal() {
-    console.log("🧹 Limpieza total de la página...");
-    
+    console.log("🧹 Limpieza de contenedores...");
     const elementosEliminar = [
         '#productos-berkot', '#berkot-container', '.productos-berkot',
-        '[id*="producto"]', '[class*="producto"]',
-        '.products', '.product-grid', '#products'
+        '[id*="producto"]', '[class*="producto"]', '.products', '.product-grid'
     ];
-    
     elementosEliminar.forEach(selector => {
         document.querySelectorAll(selector).forEach(el => {
             if (el.id !== 'btn-carrito' && el.id !== 'btn-admin' && !el.id?.includes('whats')) {
@@ -49,10 +47,9 @@ function limpiezaTotal() {
     });
 }
 
-// ===== 2. CREAR CONTENEDOR PRINCIPAL CON LOGO =====
+// ===== 2. CONTENEDOR PRINCIPAL =====
 function crearContenedor() {
     limpiezaTotal();
-    
     const contenedor = document.createElement('div');
     contenedor.id = 'berkot-container-principal';
     contenedor.style.cssText = `
@@ -62,20 +59,16 @@ function crearContenedor() {
         margin: 0 auto;
         padding: 20px;
         font-family: 'Arial', sans-serif;
-        position: relative;
-        z-index: 1000;
     `;
-    
     if (document.body.firstChild) {
         document.body.insertBefore(contenedor, document.body.firstChild);
     } else {
         document.body.appendChild(contenedor);
     }
-    
     return contenedor;
 }
 
-// ===== 3. MOSTRAR LOGO DE BERKOT =====
+// ===== 3. LOGO BERKOT =====
 function mostrarLogo(contenedor) {
     const logoHTML = `
         <div style="
@@ -87,22 +80,12 @@ function mostrarLogo(contenedor) {
             color: white;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         ">
-            <h1 style="
-                font-size: 52px;
-                margin: 0;
-                font-weight: 900;
-                text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
-                letter-spacing: 2px;
-            ">🛍️ BERKOT</h1>
-            <p style="
-                font-size: 20px;
-                margin: 15px 0 0;
-                opacity: 0.95;
-                font-weight: 300;
-            ">Selecciona la cantidad exacta y unidad de medida que necesitas</p>
+            <h1 style="font-size: 52px; margin: 0; font-weight: 900;">🛍️ BERKOT</h1>
+            <p style="font-size: 20px; margin: 15px 0 0; opacity: 0.95;">
+                Selecciona la cantidad exacta y unidad de medida que necesitas
+            </p>
         </div>
     `;
-    
     contenedor.innerHTML = logoHTML;
 }
 
@@ -112,19 +95,11 @@ function mostrarProductos() {
     mostrarLogo(contenedor);
     
     if (!window.productos || window.productos.length === 0) {
-        contenedor.innerHTML += `
-            <div style="text-align: center; padding: 60px; background: #f8f9fa; border-radius: 12px;">
-                <span style="font-size: 48px;">📭</span>
-                <h3 style="margin: 20px 0;">No hay productos disponibles</h3>
-                <p style="color: #666;">Usa el botón ⚙️ Admin para agregar productos</p>
-            </div>
-        `;
+        contenedor.innerHTML += `<div style="text-align: center; padding: 60px;">📭 No hay productos disponibles</div>`;
         return;
     }
     
-    let productosHTML = `
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; margin-top: 20px;">
-    `;
+    let productosHTML = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; margin-top: 20px;">`;
     
     window.productos.forEach(p => {
         const precio = p.basePrice || 0;
@@ -134,129 +109,26 @@ function mostrarProductos() {
         const borderColor = p.available !== false ? '#27ae60' : '#e74c3c';
         
         productosHTML += `
-            <div id="producto-${id}" style="
-                border: 3px solid ${borderColor};
-                border-radius: 16px;
-                padding: 20px;
-                background: white;
-                box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-                transition: all 0.3s ease;
-                position: relative;
-            ">
-                <h3 style="margin: 0 0 15px; color: #333; font-size: 1.5em; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;">
-                    ${p.name || 'Producto'}
-                </h3>
+            <div style="border: 3px solid ${borderColor}; border-radius: 16px; padding: 20px; background: white;">
+                <h3 style="margin: 0 0 15px;">${p.name}</h3>
+                <div style="font-size: 32px; color: #27ae60; font-weight: bold;">$${precio.toFixed(2)} <span style="font-size: 16px; color: #666;">/${unidad}</span></div>
+                ${p.description ? `<p style="color: #666;">${p.description}</p>` : ''}
                 
-                <div style="
-                    background: #f8f9fa;
-                    padding: 15px;
-                    border-radius: 12px;
-                    margin-bottom: 15px;
-                ">
-                    <div style="font-size: 32px; color: #2c3e50; font-weight: bold; margin-bottom: 5px;">
-                        $${precio.toFixed(2)}
-                    </div>
-                    <div style="font-size: 14px; color: #7f8c8d;">
-                        Precio por ${unidad === 'l' ? 'litro' : unidad === 'unidad' ? 'unidad' : unidad}: $${precio.toFixed(2)}
-                    </div>
-                </div>
-                
-                ${p.description ? `<p style="color: #666; margin: 15px 0; font-style: italic;">📝 ${p.description}</p>` : ''}
-                
-                <div style="
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    margin: 20px 0;
-                    padding: 15px;
-                    background: #fff;
-                    border: 2px solid #e0e0e0;
-                    border-radius: 12px;
-                ">
-                    <span style="font-weight: bold; color: #34495e;">Cantidad:</span>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 12px;">
+                    <span>Cantidad:</span>
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <button onclick="window.cambiarCantidad('${id}', -${unidad === 'unidad' ? 1 : 0.5}, ${min})" style="
-                            width: 40px; height: 40px;
-                            background: #f1f3f4;
-                            border: none;
-                            border-radius: 10px;
-                            font-size: 20px;
-                            font-weight: bold;
-                            color: #2c3e50;
-                            cursor: pointer;
-                        ">−</button>
-                        
-                        <span id="cant-${id}" style="
-                            width: 80px;
-                            height: 40px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            background: white;
-                            border: 2px solid #e0e0e0;
-                            border-radius: 10px;
-                            font-size: 18px;
-                            font-weight: bold;
-                            color: #2c3e50;
-                        ">${min.toFixed(unidad === 'unidad' ? 0 : 1)}</span>
-                        
-                        <button onclick="window.cambiarCantidad('${id}', ${unidad === 'unidad' ? 1 : 0.5}, ${min})" style="
-                            width: 40px; height: 40px;
-                            background: #f1f3f4;
-                            border: none;
-                            border-radius: 10px;
-                            font-size: 20px;
-                            font-weight: bold;
-                            color: #2c3e50;
-                            cursor: pointer;
-                        ">+</button>
+                        <button onclick="window.cambiarCantidad('${id}', -${unidad === 'unidad' ? 1 : 0.5}, ${min})" style="width: 40px; height: 40px; background: white; border: 1px solid #ddd; border-radius: 8px; font-size: 20px; cursor: pointer;">−</button>
+                        <span id="cant-${id}" style="width: 80px; height: 40px; display: flex; align-items: center; justify-content: center; background: white; border: 1px solid #ddd; border-radius: 8px; font-size: 18px; font-weight: bold;">${min.toFixed(unidad === 'unidad' ? 0 : 1)}</span>
+                        <button onclick="window.cambiarCantidad('${id}', ${unidad === 'unidad' ? 1 : 0.5}, ${min})" style="width: 40px; height: 40px; background: white; border: 1px solid #ddd; border-radius: 8px; font-size: 20px; cursor: pointer;">+</button>
                     </div>
-                    <span style="font-weight: bold; color: #27ae60; font-size: 20px;">
-                        $${(precio * min).toFixed(2)}
-                    </span>
+                    <span style="font-weight: bold; color: #27ae60; font-size: 20px;" id="total-${id}">$${(precio * min).toFixed(2)}</span>
                 </div>
                 
-                <button onclick="window.comprarProducto('${id}', ${precio}, '${unidad}', '${p.name}')" style="
-                    width: 100%;
-                    padding: 15px;
-                    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
-                    color: white;
-                    border: none;
-                    border-radius: 12px;
-                    font-size: 18px;
-                    font-weight: bold;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                ">
-                    🛒 Agregar al Carrito
-                </button>
+                <button onclick="window.comprarProducto('${id}')" style="width: 100%; padding: 15px; background: #27ae60; color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer;">🛒 Agregar al Carrito</button>
                 
-                <div id="admin-actions-${id}" style="
-                    display: ${usuarioActual ? 'flex' : 'none'};
-                    justify-content: flex-end;
-                    gap: 10px;
-                    margin-top: 20px;
-                    padding-top: 15px;
-                    border-top: 2px dashed #e0e0e0;
-                ">
-                    <button onclick="window.editarProducto('${id}')" style="
-                        padding: 10px 20px;
-                        background: #3498db;
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        font-size: 14px;
-                        cursor: pointer;
-                    ">✏️ Editar</button>
-                    <button onclick="window.eliminarProducto('${id}')" style="
-                        padding: 10px 20px;
-                        background: #e74c3c;
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        font-size: 14px;
-                        cursor: pointer;
-                    ">🗑️ Eliminar</button>
+                <div id="admin-actions-${id}" style="display: ${usuarioActual ? 'flex' : 'none'}; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                    <button onclick="window.editarProducto('${id}')" style="padding: 8px 16px; background: #3498db; color: white; border: none; border-radius: 6px;">✏️ Editar</button>
+                    <button onclick="window.eliminarProducto('${id}')" style="padding: 8px 16px; background: #e74c3c; color: white; border: none; border-radius: 6px;">🗑️ Eliminar</button>
                 </div>
             </div>
         `;
@@ -264,36 +136,32 @@ function mostrarProductos() {
     
     productosHTML += `</div>`;
     contenedor.innerHTML += productosHTML;
-    console.log(`✅ ${window.productos.length} productos de Firebase mostrados`);
 }
 
 // ===== 5. FUNCIONES DE CANTIDAD =====
 window.cambiarCantidad = function(id, delta, min) {
     const span = document.getElementById(`cant-${id}`);
-    if (span) {
+    const totalSpan = document.getElementById(`total-${id}`);
+    if (span && totalSpan) {
         let valor = parseFloat(span.textContent) || min;
         valor = Math.max(min, valor + delta);
+        valor = Math.round(valor * 10) / 10;
+        span.textContent = valor.toFixed(1);
         
         const producto = window.productos.find(p => p.id === id);
-        if (producto?.unit === 'unidad') {
-            valor = Math.round(valor);
-            span.textContent = valor;
-        } else {
-            valor = Math.round(valor * 10) / 10;
-            span.textContent = valor.toFixed(1);
-        }
-        
-        const totalSpan = span.parentElement.parentElement.querySelector('span:last-child');
-        if (totalSpan && producto) {
+        if (producto) {
             totalSpan.textContent = `$${(producto.basePrice * valor).toFixed(2)}`;
         }
     }
 };
 
 // ===== 6. COMPRAR =====
-window.comprarProducto = function(id, precio, unidad, nombre) {
+window.comprarProducto = function(id) {
+    const producto = window.productos.find(p => p.id === id);
+    if (!producto) return;
+    
     const span = document.getElementById(`cant-${id}`);
-    const cantidad = span ? parseFloat(span.textContent) : 0.5;
+    const cantidad = span ? parseFloat(span.textContent) : (producto.minQty || 0.5);
     
     const existente = carrito.findIndex(item => item.id === id);
     
@@ -302,29 +170,29 @@ window.comprarProducto = function(id, precio, unidad, nombre) {
         carrito[existente].total = carrito[existente].precio * carrito[existente].cantidad;
     } else {
         carrito.push({
-            id: id,
-            nombre: nombre,
-            precio: precio,
-            unidad: unidad,
+            id: producto.id,
+            nombre: producto.name,
+            precio: producto.basePrice,
+            unidad: producto.unit || 'lb',
             cantidad: cantidad,
-            total: precio * cantidad
+            total: producto.basePrice * cantidad
         });
     }
     
     localStorage.setItem('berkot_carrito', JSON.stringify(carrito));
     actualizarContadorCarrito();
-    mostrarNotificacion(`✅ ${cantidad.toFixed(unidad === 'unidad' ? 0 : 1)} ${unidad} de ${nombre} agregado`, 'success');
+    mostrarNotificacion(`✅ ${cantidad.toFixed(1)} ${producto.unit} de ${producto.name} agregado`, 'success');
 };
 
 // ===== 7. NOTIFICACIONES =====
-function mostrarNotificacion(mensaje, tipo = 'info') {
+function mostrarNotificacion(mensaje, tipo = 'success') {
     const notif = document.createElement('div');
     notif.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
         padding: 15px 25px;
-        background: ${tipo === 'success' ? '#27ae60' : '#3498db'};
+        background: ${tipo === 'success' ? '#27ae60' : '#e74c3c'};
         color: white;
         border-radius: 10px;
         z-index: 9999999;
@@ -342,25 +210,193 @@ function actualizarContadorCarrito() {
     const btnCarrito = document.getElementById('btn-carrito');
     if (btnCarrito) {
         const total = carrito.reduce((sum, item) => sum + item.cantidad, 0);
-        btnCarrito.innerHTML = `🛒 Carrito ${total > 0 ? `(${total.toFixed(1)})` : ''}`;
+        btnCarrito.innerHTML = `🛒 ${total > 0 ? total.toFixed(1) : ''}`.trim();
     }
 }
+
+// ===== 🔴🔴🔴 SOLUCIÓN 1: BOTÓN GUARDAR INFORMACIÓN 🔴🔴🔴 =====
+window.guardarInformacionCliente = function() {
+    console.log("💾 Guardando información del cliente...");
+    
+    const nombre = document.getElementById('cliente-nombre')?.value;
+    const telefono = document.getElementById('cliente-telefono')?.value;
+    const direccion = document.getElementById('cliente-direccion')?.value;
+    const notas = document.getElementById('cliente-notas')?.value || '';
+    
+    if (!nombre || !telefono || !direccion) {
+        mostrarNotificacion('❌ Completa todos los campos obligatorios', 'error');
+        return false;
+    }
+    
+    clienteInfo = {
+        nombre: nombre.trim(),
+        telefono: telefono.trim(),
+        direccion: direccion.trim(),
+        notas: notas.trim()
+    };
+    
+    localStorage.setItem('cliente_info', JSON.stringify(clienteInfo));
+    mostrarNotificacion('✅ Información guardada correctamente', 'success');
+    
+    // Actualizar resumen si existe
+    const summaryDiv = document.getElementById('customer-info-summary');
+    const detailsDiv = document.getElementById('customer-details');
+    
+    if (summaryDiv && detailsDiv) {
+        summaryDiv.style.display = 'block';
+        detailsDiv.innerHTML = `
+            <p><strong>Nombre:</strong> ${clienteInfo.nombre}</p>
+            <p><strong>Teléfono:</strong> ${clienteInfo.telefono}</p>
+            <p><strong>Dirección:</strong> ${clienteInfo.direccion}</p>
+            ${clienteInfo.notas ? `<p><strong>Notas:</strong> ${clienteInfo.notas}</p>` : ''}
+        `;
+    }
+    
+    return true;
+};
+
+// ===== 🔴🔴🔴 SOLUCIÓN 2: CARGAR INFORMACIÓN GUARDADA 🔴🔴🔴 =====
+function cargarInformacionCliente() {
+    const savedInfo = localStorage.getItem('cliente_info');
+    if (savedInfo) {
+        try {
+            clienteInfo = JSON.parse(savedInfo);
+            
+            const nombreInput = document.getElementById('cliente-nombre');
+            const telefonoInput = document.getElementById('cliente-telefono');
+            const direccionInput = document.getElementById('cliente-direccion');
+            const notasInput = document.getElementById('cliente-notas');
+            
+            if (nombreInput) nombreInput.value = clienteInfo.nombre || '';
+            if (telefonoInput) telefonoInput.value = clienteInfo.telefono || '';
+            if (direccionInput) direccionInput.value = clienteInfo.direccion || '';
+            if (notasInput) notasInput.value = clienteInfo.notas || '';
+            
+            console.log("✅ Información de cliente cargada");
+        } catch (e) {
+            console.error("Error cargando información:", e);
+        }
+    }
+}
+
+// ===== 🔴🔴🔴 SOLUCIÓN 3: ENVIAR PEDIDO POR WHATSAPP (100% FUNCIONAL) 🔴🔴🔴 =====
+window.enviarPedidoWhatsApp = function() {
+    console.log("📤 ENVIANDO PEDIDO POR WHATSAPP...");
+    
+    // 1. VERIFICAR CARRITO
+    if (carrito.length === 0) {
+        mostrarNotificacion('❌ Agrega productos al carrito primero', 'error');
+        return;
+    }
+    
+    // 2. VERIFICAR/OBTENER DATOS DEL CLIENTE
+    let nombre = document.getElementById('cliente-nombre')?.value;
+    let telefono = document.getElementById('cliente-telefono')?.value;
+    let direccion = document.getElementById('cliente-direccion')?.value;
+    let notas = document.getElementById('cliente-notas')?.value || '';
+    
+    // Si no hay datos en el formulario, intentar cargar de localStorage
+    if (!nombre || !telefono || !direccion) {
+        const savedInfo = localStorage.getItem('cliente_info');
+        if (savedInfo) {
+            const info = JSON.parse(savedInfo);
+            nombre = info.nombre || '';
+            telefono = info.telefono || '';
+            direccion = info.direccion || '';
+            notas = info.notas || '';
+            
+            // Rellenar formulario
+            if (document.getElementById('cliente-nombre')) document.getElementById('cliente-nombre').value = nombre;
+            if (document.getElementById('cliente-telefono')) document.getElementById('cliente-telefono').value = telefono;
+            if (document.getElementById('cliente-direccion')) document.getElementById('cliente-direccion').value = direccion;
+            if (document.getElementById('cliente-notas')) document.getElementById('cliente-notas').value = notas;
+        }
+    }
+    
+    // 3. VALIDACIÓN FINAL
+    if (!nombre || !telefono || !direccion) {
+        mostrarNotificacion('❌ Completa tus datos en el formulario', 'error');
+        document.querySelector('.customer-form')?.scrollIntoView({ behavior: 'smooth' });
+        return;
+    }
+    
+    // 4. CONSTRUIR MENSAJE DEL PEDIDO
+    let totalGeneral = 0;
+    let mensaje = "🛍️ *NUEVO PEDIDO - BERKOT*\n\n";
+    mensaje += "👤 *CLIENTE:* " + nombre.trim() + "\n";
+    mensaje += "📞 *TELÉFONO:* " + telefono.trim() + "\n";
+    mensaje += "📍 *DIRECCIÓN:* " + direccion.trim() + "\n\n";
+    mensaje += "*🛒 PRODUCTOS SOLICITADOS:*\n";
+    mensaje += "══════════════════════\n";
+    
+    carrito.forEach((item, index) => {
+        const cantidad = item.cantidad || 0;
+        const precio = item.precio || 0;
+        const total = item.total || (precio * cantidad);
+        totalGeneral += total;
+        
+        let cantFormateada = cantidad.toFixed(1);
+        if (item.unidad === 'unidad') cantFormateada = Math.round(cantidad).toString();
+        
+        mensaje += `${index + 1}. *${item.nombre}*\n`;
+        mensaje += `   ${cantFormateada} ${item.unidad} x $${precio.toFixed(2)} = *$${total.toFixed(2)}*\n`;
+    });
+    
+    mensaje += "══════════════════════\n";
+    mensaje += `💰 *TOTAL A PAGAR: $${totalGeneral.toFixed(2)}*\n\n`;
+    
+    if (notas.trim()) {
+        mensaje += `📝 *NOTAS:* ${notas.trim()}\n\n`;
+    }
+    
+    const ahora = new Date();
+    const fecha = ahora.toLocaleDateString('es-ES');
+    const hora = ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    mensaje += `⏰ *FECHA Y HORA:* ${fecha} - ${hora}\n\n`;
+    mensaje += `✅ *Por favor, confirme la disponibilidad del pedido.*`;
+    
+    // 5. ENVIAR A WHATSAPP (NÚMERO DEL PADRE)
+    const numeroNegocio = "5356603249";
+    const url = `https://wa.me/${numeroNegocio}?text=${encodeURIComponent(mensaje)}`;
+    
+    // Abrir WhatsApp
+    window.open(url, '_blank');
+    
+    // 6. NOTIFICACIÓN DE ÉXITO
+    mostrarNotificacion('✅ Pedido enviado por WhatsApp', 'success');
+    
+    // 7. PREGUNTAR SI VACIAR CARRITO
+    setTimeout(() => {
+        if (confirm("✅ Pedido enviado correctamente.\n\n¿Vaciar carrito?")) {
+            carrito = [];
+            localStorage.setItem('berkot_carrito', JSON.stringify(carrito));
+            actualizarContadorCarrito();
+            
+            // Limpiar vista del carrito
+            const cartItems = document.getElementById('cart-items');
+            const totalAmount = document.getElementById('total-amount');
+            if (cartItems) cartItems.innerHTML = '<p>Tu carrito está vacío</p>';
+            if (totalAmount) totalAmount.textContent = '0.00';
+            
+            mostrarNotificacion('✅ Carrito vaciado', 'success');
+        }
+    }, 1500);
+};
 
 // ===== 9. VER CARRITO =====
 window.verCarrito = function() {
     if (carrito.length === 0) {
-        mostrarNotificacion('🛒 Tu carrito está vacío', 'info');
+        mostrarNotificacion('🛒 Carrito vacío', 'error');
         return;
     }
     
     let mensaje = "🛍️ MI CARRITO:\n\n";
     let total = 0;
     carrito.forEach((item, i) => {
-        mensaje += `${i+1}. ${item.nombre}\n`;
-        mensaje += `   ${item.cantidad.toFixed(item.unidad === 'unidad' ? 0 : 1)} ${item.unidad} x $${item.precio.toFixed(2)} = $${item.total.toFixed(2)}\n\n`;
+        mensaje += `${i+1}. ${item.nombre}: ${item.cantidad.toFixed(1)} ${item.unidad} = $${item.total.toFixed(2)}\n`;
         total += item.total;
     });
-    mensaje += `💰 TOTAL: $${total.toFixed(2)}\n\n`;
+    mensaje += `\n💰 TOTAL: $${total.toFixed(2)}\n\n`;
     mensaje += "¿Vaciar carrito?";
     
     if (confirm(mensaje)) {
@@ -378,26 +414,29 @@ function crearBotonCarrito() {
     
     const btn = document.createElement('button');
     btn.id = 'btn-carrito';
-    btn.innerHTML = '🛒 Carrito';
+    btn.innerHTML = '🛒';
     btn.style.cssText = `
         position: fixed !important;
-        bottom: 20px !important;
+        bottom: 100px !important;
         right: 20px !important;
-        padding: 15px 30px !important;
-        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+        width: 60px !important;
+        height: 60px !important;
+        background: #3498db !important;
         color: white !important;
         border: none !important;
-        border-radius: 50px !important;
-        font-size: 16px !important;
+        border-radius: 50% !important;
+        font-size: 24px !important;
         font-weight: bold !important;
         cursor: pointer !important;
         z-index: 9999998 !important;
         box-shadow: 0 4px 15px rgba(52,152,219,0.4) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     `;
     btn.onclick = window.verCarrito;
     document.body.appendChild(btn);
     actualizarContadorCarrito();
-    console.log("✅ Botón Carrito creado en DERECHA");
 }
 
 // ===== 11. BOTÓN ADMIN =====
@@ -407,71 +446,81 @@ function crearBotonAdmin() {
     
     const btn = document.createElement('button');
     btn.id = 'btn-admin';
-    btn.innerHTML = '⚙️ Admin';
+    btn.innerHTML = '⚙️';
     btn.style.cssText = `
         position: fixed !important;
         bottom: 20px !important;
         left: 20px !important;
-        padding: 15px 30px !important;
-        background: linear-gradient(135deg, #FFA000 0%, #FF8F00 100%) !important;
+        width: 60px !important;
+        height: 60px !important;
+        background: #FFA000 !important;
         color: white !important;
         border: none !important;
-        border-radius: 50px !important;
-        font-size: 16px !important;
+        border-radius: 50% !important;
+        font-size: 24px !important;
         font-weight: bold !important;
         cursor: pointer !important;
         z-index: 9999999 !important;
         box-shadow: 0 4px 15px rgba(255,160,0,0.4) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     `;
     btn.onclick = mostrarLogin;
     document.body.appendChild(btn);
-    console.log("✅ Botón Admin creado en IZQUIERDA");
 }
 
-// ===== 12. WHATSAPP =====
+// ===== 12. WHATSAPP - BOTÓN PRINCIPAL (ENVÍA PEDIDO) =====
 function crearBotonWhatsApp() {
-    // Eliminar cualquier WhatsApp existente
-    document.querySelectorAll('.whatsapp-btn-fijo, a[href*="wa.me"], a[href*="whatsapp"]').forEach(el => el.remove());
+    // Eliminar cualquier botón WhatsApp existente
+    document.querySelectorAll('#btn-whatsapp-pedido, .whatsapp-btn, a[href*="wa.me"]').forEach(el => el.remove());
     
-    // Crear botón NUEVO con TODO funcionando
-    const waBtn = document.createElement('a');
-    waBtn.className = 'whatsapp-btn-fijo';
-    waBtn.href = 'https://wa.me/5356603249';
-    waBtn.target = '_blank';
-    waBtn.rel = 'noopener noreferrer';
-    waBtn.innerHTML = '📱';
-    waBtn.title = 'Contactar por WhatsApp';
+    const btn = document.createElement('button');
+    btn.id = 'btn-whatsapp-pedido';
+    btn.innerHTML = '📱';
+    btn.title = 'Enviar pedido por WhatsApp';
     
-    waBtn.style.cssText = `
+    btn.style.cssText = `
         position: fixed !important;
-        left: 20px !important;
-        bottom: 100px !important;
+        bottom: 180px !important;
+        right: 20px !important;
         width: 60px !important;
         height: 60px !important;
         background: #25D366 !important;
         color: white !important;
+        border: none !important;
         border-radius: 50% !important;
+        font-size: 28px !important;
+        font-weight: bold !important;
+        cursor: pointer !important;
+        z-index: 9999999 !important;
+        box-shadow: 0 6px 20px rgba(37,211,102,0.4) !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        font-size: 32px !important;
-        text-decoration: none !important;
-        box-shadow: 0 6px 20px rgba(37,211,102,0.4) !important;
-        z-index: 999999999 !important;
         transition: all 0.3s ease !important;
     `;
     
-    waBtn.onmouseover = function() {
+    // Evento click - ENVÍA EL PEDIDO
+    btn.onclick = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("📱 Botón WhatsApp clickeado");
+        window.enviarPedidoWhatsApp();
+    };
+    
+    // Hover effect
+    btn.onmouseover = function() {
         this.style.transform = 'scale(1.1)';
         this.style.boxShadow = '0 8px 25px rgba(37,211,102,0.6)';
     };
-    waBtn.onmouseout = function() {
+    btn.onmouseout = function() {
         this.style.transform = 'scale(1)';
         this.style.boxShadow = '0 6px 20px rgba(37,211,102,0.4)';
     };
     
-    document.body.appendChild(waBtn);
-    console.log('✅✅ WHATSAPP CREADO: izquierda 100px - Número: 5356603249');
+    document.body.appendChild(btn);
+    console.log("✅✅ BOTÓN WHATSAPP CREADO - ENVÍA PEDIDO COMPLETO");
 }
 
 // ===== 13. LOGIN =====
@@ -481,17 +530,14 @@ window.mostrarLogin = async function() {
     const password = prompt("🔑 Contraseña:");
     if (!password) return;
     
-    const emailLimpio = email.replace(/\s+/g, '').trim();
-    const passwordLimpia = password.replace(/\s+/g, '').trim();
-    
     try {
-        await signInWithEmailAndPassword(auth, emailLimpio, passwordLimpia);
-        usuarioActual = emailLimpio;
+        await signInWithEmailAndPassword(auth, email.trim(), password.trim());
+        usuarioActual = email.trim();
         mostrarNotificacion('✅ Sesión iniciada', 'success');
         
         const btnAdmin = document.getElementById('btn-admin');
         if (btnAdmin) {
-            btnAdmin.innerHTML = '👤 Admin Panel';
+            btnAdmin.innerHTML = '👤';
             btnAdmin.onclick = mostrarPanelAdmin;
         }
         
@@ -509,7 +555,7 @@ window.logout = async function() {
     
     const btnAdmin = document.getElementById('btn-admin');
     if (btnAdmin) {
-        btnAdmin.innerHTML = '⚙️ Admin';
+        btnAdmin.innerHTML = '⚙️';
         btnAdmin.onclick = mostrarLogin;
     }
     
@@ -519,7 +565,7 @@ window.logout = async function() {
 // ===== 15. PANEL ADMIN =====
 window.mostrarPanelAdmin = function() {
     const action = prompt(
-        "👤 PANEL ADMIN\n\n1. ➕ Agregar producto\n2. 🔒 Cerrar sesión\n\nSelecciona 1 o 2:"
+        "👤 PANEL ADMIN\n\n1. ➕ Agregar producto\n2. 🔒 Cerrar sesión"
     );
     
     if (action === '1') {
@@ -531,26 +577,20 @@ window.mostrarPanelAdmin = function() {
 
 // ===== 16. AGREGAR PRODUCTO =====
 window.agregarProducto = async function() {
-    const nombre = prompt("📦 Nombre del producto:");
+    const nombre = prompt("📦 Nombre:");
     if (!nombre) return;
-    
     const precio = parseFloat(prompt("💰 Precio:"));
-    if (!precio || precio <= 0) return;
-    
+    if (!precio) return;
     const unidad = prompt("⚖️ Unidad (lb/kg/l/unidad):", "lb");
-    if (!unidad || !['lb', 'kg', 'l', 'unidad'].includes(unidad)) return;
-    
-    const descripcion = prompt("📝 Descripción (opcional):") || "";
-    const minQty = unidad === 'unidad' ? 1 : 0.5;
+    const descripcion = prompt("📝 Descripción:", "") || "";
     
     try {
-        const newRef = push(ref(db, 'productos'));
-        await set(newRef, {
+        await push(ref(db, 'productos'), {
             name: nombre,
             basePrice: precio,
             unit: unidad,
             description: descripcion,
-            minQty: minQty,
+            minQty: unidad === 'unidad' ? 1 : 0.5,
             available: true
         });
         mostrarNotificacion('✅ Producto agregado', 'success');
@@ -561,158 +601,24 @@ window.agregarProducto = async function() {
 
 // ===== 17. EDITAR PRODUCTO =====
 window.editarProducto = async function(id) {
-    if (!usuarioActual) {
-        mostrarNotificacion('❌ Debes iniciar sesión', 'error');
-        return;
-    }
-    
+    if (!usuarioActual) return mostrarNotificacion('❌ Inicia sesión', 'error');
     const producto = window.productos.find(p => p.id === id);
     if (!producto) return;
     
-    const opcion = prompt(
-        `✏️ EDITAR ${producto.name}\n\n1. Nombre\n2. Precio\n3. Unidad\n4. Descripción\n5. Disponibilidad\n6. Cancelar`,
-        '6'
-    );
-    
-    try {
-        switch(opcion) {
-            case '1':
-                const nuevoNombre = prompt("Nuevo nombre:", producto.name);
-                if (nuevoNombre) await update(ref(db, `productos/${id}`), { name: nuevoNombre });
-                break;
-            case '2':
-                const nuevoPrecio = parseFloat(prompt("Nuevo precio:", producto.basePrice));
-                if (nuevoPrecio > 0) await update(ref(db, `productos/${id}`), { basePrice: nuevoPrecio });
-                break;
-            case '3':
-                const nuevaUnidad = prompt("Nueva unidad (lb/kg/l/unidad):", producto.unit);
-                if (nuevaUnidad) await update(ref(db, `productos/${id}`), { 
-                    unit: nuevaUnidad,
-                    minQty: nuevaUnidad === 'unidad' ? 1 : 0.5
-                });
-                break;
-            case '4':
-                const nuevaDesc = prompt("Nueva descripción:", producto.description || '');
-                await update(ref(db, `productos/${id}`), { description: nuevaDesc });
-                break;
-            case '5':
-                await update(ref(db, `productos/${id}`), { available: !producto.available });
-                break;
-        }
-        mostrarNotificacion('✅ Producto actualizado', 'success');
-    } catch (error) {
-        mostrarNotificacion('❌ Error al editar', 'error');
+    const nuevoPrecio = parseFloat(prompt("Nuevo precio:", producto.basePrice));
+    if (nuevoPrecio > 0) {
+        await update(ref(db, `productos/${id}`), { basePrice: nuevoPrecio });
+        mostrarNotificacion('✅ Precio actualizado', 'success');
     }
 };
 
 // ===== 18. ELIMINAR PRODUCTO =====
 window.eliminarProducto = async function(id) {
-    if (!usuarioActual) {
-        mostrarNotificacion('❌ Debes iniciar sesión', 'error');
-        return;
-    }
-    
-    if (confirm("⚠️ ¿Eliminar este producto?")) {
+    if (!usuarioActual) return mostrarNotificacion('❌ Inicia sesión', 'error');
+    if (confirm("¿Eliminar producto?")) {
         await remove(ref(db, `productos/${id}`));
         mostrarNotificacion('✅ Producto eliminado', 'success');
     }
-};
-
-// ===== 🔴🔴🔴 SOLUCIÓN 3 - WHATSAPP ENVÍA PEDIDO COMPLETO 🔴🔴🔴 =====
-window.enviarPedidoWhatsApp = function() {
-    console.log("📤 Enviando pedido por WhatsApp...");
-    
-    // 1. VERIFICAR CARRITO
-    const carrito = JSON.parse(localStorage.getItem('berkot_carrito')) || [];
-    
-    if (carrito.length === 0) {
-        mostrarNotificacion('❌ Carrito vacío. Agrega productos primero.', 'error');
-        return;
-    }
-    
-    // 2. VERIFICAR DATOS DEL CLIENTE
-    const nombre = document.getElementById('cliente-nombre')?.value;
-    const telefono = document.getElementById('cliente-telefono')?.value;
-    const direccion = document.getElementById('cliente-direccion')?.value;
-    const notas = document.getElementById('cliente-notas')?.value || '';
-    
-    if (!nombre || !telefono || !direccion) {
-        mostrarNotificacion('❌ Completa tus datos en el formulario', 'error');
-        const formulario = document.querySelector('.customer-form');
-        if (formulario) formulario.scrollIntoView({ behavior: 'smooth' });
-        return;
-    }
-    
-    // 3. CALCULAR TOTAL Y CONSTRUIR MENSAJE
-    let totalGeneral = 0;
-    let mensaje = "🛍️ *NUEVO PEDIDO - BERKOT*\n\n";
-    mensaje += "👤 *Cliente:* " + nombre.trim() + "\n";
-    mensaje += "📞 *Teléfono:* " + telefono.trim() + "\n";
-    mensaje += "📍 *Dirección:* " + direccion.trim() + "\n\n";
-    mensaje += "*🛒 PRODUCTOS:*\n";
-    
-    carrito.forEach((item, index) => {
-        const cant = item.cantidad || 0;
-        const precio = item.precio || 0;
-        const total = item.total || (precio * cant);
-        
-        let cantidadFormateada = cant.toFixed(1);
-        if (item.unidad === 'unidad') {
-            cantidadFormateada = Math.round(cant).toString();
-        }
-        
-        mensaje += `${index + 1}. ${item.nombre}: ${cantidadFormateada} ${item.unidad} x $${precio.toFixed(2)} = *$${total.toFixed(2)}*\n`;
-        totalGeneral += total;
-    });
-    
-    mensaje += `\n💰 *TOTAL DEL PEDIDO: $${totalGeneral.toFixed(2)}*`;
-    
-    if (notas.trim()) {
-        mensaje += `\n\n📝 *Notas:* ${notas.trim()}`;
-    }
-    
-    const ahora = new Date();
-    const fechaFormateada = ahora.toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-    });
-    const horaFormateada = ahora.toLocaleTimeString('es-ES', {
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    
-    mensaje += `\n\n⏰ *Fecha y hora:* ${fechaFormateada} - ${horaFormateada}`;
-    mensaje += `\n\n✅ Por favor, confirme la disponibilidad de los productos.`;
-    
-    // 4. ENVIAR POR WHATSAPP
-    const numeroNegocio = "5356603249";
-    const url = `https://wa.me/${numeroNegocio}?text=${encodeURIComponent(mensaje)}`;
-    window.open(url, '_blank');
-    
-    // 5. NOTIFICACIÓN DE ÉXITO
-    mostrarNotificacion('✅ Pedido enviado por WhatsApp', 'success');
-    
-    // 6. PREGUNTAR SI VACIAR CARRITO
-    setTimeout(() => {
-        if (confirm("✅ Pedido enviado correctamente.\n\n¿Deseas vaciar el carrito?")) {
-            localStorage.removeItem('berkot_carrito');
-            carrito.length = 0;
-            actualizarContadorCarrito();
-            
-            const cartItems = document.getElementById('cart-items');
-            const totalAmount = document.getElementById('total-amount');
-            
-            if (cartItems) {
-                cartItems.innerHTML = '<p id="empty-cart-message">Tu carrito está vacío. Agrega productos para comenzar.</p>';
-            }
-            if (totalAmount) {
-                totalAmount.textContent = '0.00';
-            }
-            
-            mostrarNotificacion('✅ Carrito vaciado', 'success');
-        }
-    }, 1500);
 };
 
 // ===== 19. ESTILOS GLOBALES =====
@@ -723,11 +629,11 @@ function agregarEstilos() {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
-        @keyframes slideOutRight {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
         body { margin: 0; padding: 0; background: #f5f5f5; }
+        .customer-form { max-width: 800px; margin: 40px auto; padding: 30px; background: white; border-radius: 20px; }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; font-weight: 600; }
+        .form-input { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px; }
     `;
     document.head.appendChild(estilos);
 }
@@ -736,7 +642,6 @@ function agregarEstilos() {
 const productosRef = ref(db, 'productos');
 onValue(productosRef, (snapshot) => {
     const data = snapshot.val();
-    
     if (data) {
         window.productos = Object.keys(data).map(key => ({
             id: key,
@@ -747,23 +652,45 @@ onValue(productosRef, (snapshot) => {
             minQty: data[key].minQty || (data[key].unit === 'unidad' ? 1 : 0.5),
             available: data[key].available !== false
         }));
-        
-        console.log(`✅ ${window.productos.length} productos de Firebase`);
         mostrarProductos();
     }
 });
 
-// ===== 21. INICIALIZAR =====
+// ===== 21. INICIALIZACIÓN =====
 function inicializar() {
-    console.log("🚀 Inicializando sistema...");
+    console.log("🚀 Inicializando sistema profesional...");
     
     agregarEstilos();
     crearBotonCarrito();
     crearBotonAdmin();
     crearBotonWhatsApp();
+    cargarInformacionCliente();
     
-    console.log("✅✅✅ SISTEMA BERKOT LISTO");
-    console.log("📞 Número: +53 5660 3249");
+    // Conectar botón guardar información
+    setTimeout(() => {
+        const btnGuardar = document.querySelector('button[onclick*="saveCustomerInfo"], #guardar-info-btn');
+        if (btnGuardar) {
+            btnGuardar.onclick = function(e) {
+                e.preventDefault();
+                window.guardarInformacionCliente();
+            };
+            console.log("✅ Botón Guardar Información conectado");
+        }
+        
+        // También buscar por texto
+        document.querySelectorAll('button').forEach(btn => {
+            if (btn.textContent.includes('Guardar Información')) {
+                btn.onclick = function(e) {
+                    e.preventDefault();
+                    window.guardarInformacionCliente();
+                };
+                console.log("✅ Botón Guardar encontrado por texto");
+            }
+        });
+    }, 1000);
+    
+    console.log("✅✅ SISTEMA BERKOT LISTO - WHATSAPP FUNCIONAL");
+    console.log("📞 Número del negocio: 5356603249");
 }
 
 // ===== EJECUTAR =====
@@ -777,4 +704,5 @@ window.editarProducto = editarProducto;
 window.eliminarProducto = eliminarProducto;
 window.agregarProducto = agregarProducto;
 window.logout = logout;
+window.guardarInformacionCliente = guardarInformacionCliente;
 window.enviarPedidoWhatsApp = enviarPedidoWhatsApp;
