@@ -1,7 +1,7 @@
-// ========== BERKOT FIREBASE - VERSIÓN FINAL CON EDICIÓN Y LITROS ==========
-// ========== CON LOGO, PRODUCTOS CON BORDES, Y SIN DUPLICADOS ==========
+// ========== BERKOT FIREBASE - VERSIÓN DEFINITIVA ==========
+// ========== TODOS LOS ERRORES CORREGIDOS ==========
 
-console.log("🔥 BERKOT FIREBASE - Iniciando sistema...");
+console.log("🔥 BERKOT - INICIANDO SISTEMA DEFINITIVO");
 
 // ===== CONFIGURACIÓN FIREBASE =====
 const firebaseConfig = {
@@ -30,24 +30,33 @@ window.productos = [];
 let carrito = JSON.parse(localStorage.getItem('berkot_carrito')) || [];
 let usuarioActual = null;
 
-// ===== 1. ELIMINAR TODO Y EMPEZAR DE CERO =====
-function resetTotal() {
-    console.log("🧹 Limpiando página para productos nuevos...");
+// ===== 1. LIMPIEZA TOTAL DE LA PÁGINA =====
+function limpiezaTotal() {
+    console.log("🧹 Limpieza total de la página...");
     
-    // Eliminar TODOS los contenedores viejos
-    document.querySelectorAll('#berkot-container, #productos-berkot, .productos-berkot, [id*="producto"], [class*="producto"]').forEach(el => {
-        if (el.id !== 'btn-carrito' && el.id !== 'btn-admin' && el.id !== 'whatsapp-btn') {
-            el.remove();
-        }
+    // ELIMINAR TODOS los contenedores de productos viejos
+    const elementosEliminar = [
+        '#productos-berkot', '#berkot-container', '.productos-berkot',
+        '[id*="producto"]', '[class*="producto"]',
+        '.products', '.product-grid', '#products'
+    ];
+    
+    elementosEliminar.forEach(selector => {
+        document.querySelectorAll(selector).forEach(el => {
+            if (el.id !== 'btn-carrito' && el.id !== 'btn-admin' && !el.id?.includes('whats')) {
+                el.remove();
+                console.log(`🗑️ Eliminado: ${selector}`);
+            }
+        });
     });
 }
 
 // ===== 2. CREAR CONTENEDOR PRINCIPAL CON LOGO =====
 function crearContenedor() {
-    resetTotal();
+    limpiezaTotal();
     
     const contenedor = document.createElement('div');
-    contenedor.id = 'berkot-container';
+    contenedor.id = 'berkot-container-principal';
     contenedor.style.cssText = `
         display: block !important;
         width: 100%;
@@ -75,22 +84,24 @@ function mostrarLogo(contenedor) {
         <div style="
             text-align: center;
             margin-bottom: 40px;
-            padding: 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
             border-radius: 20px;
             color: white;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         ">
             <h1 style="
-                font-size: 48px;
+                font-size: 52px;
                 margin: 0;
-                font-weight: bold;
-                text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                font-weight: 900;
+                text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+                letter-spacing: 2px;
             ">🛍️ BERKOT</h1>
             <p style="
-                font-size: 18px;
-                margin: 10px 0 0;
+                font-size: 20px;
+                margin: 15px 0 0;
                 opacity: 0.95;
+                font-weight: 300;
             ">Selecciona la cantidad exacta y unidad de medida que necesitas</p>
         </div>
     `;
@@ -98,7 +109,7 @@ function mostrarLogo(contenedor) {
     contenedor.innerHTML = logoHTML;
 }
 
-// ===== 4. MOSTRAR PRODUCTOS CON BORDES VERDES/ROJOS =====
+// ===== 4. MOSTRAR PRODUCTOS (SOLO DE FIREBASE) =====
 function mostrarProductos() {
     const contenedor = crearContenedor();
     mostrarLogo(contenedor);
@@ -123,8 +134,6 @@ function mostrarProductos() {
         const unidad = p.unit || 'lb';
         const min = p.minQty || (unidad === 'unidad' ? 1 : 0.5);
         const id = p.id;
-        
-        // Determinar color del borde (verde/rojo) según disponibilidad
         const borderColor = p.available !== false ? '#27ae60' : '#e74c3c';
         
         productosHTML += `
@@ -134,10 +143,9 @@ function mostrarProductos() {
                 padding: 20px;
                 background: white;
                 box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-                transition: transform 0.3s;
+                transition: all 0.3s ease;
                 position: relative;
-            " onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
-                
+            ">
                 <h3 style="margin: 0 0 15px; color: #333; font-size: 1.5em; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;">
                     ${p.name || 'Producto'}
                 </h3>
@@ -152,13 +160,12 @@ function mostrarProductos() {
                         $${precio.toFixed(2)}
                     </div>
                     <div style="font-size: 14px; color: #7f8c8d;">
-                        Precio por ${unidad === 'l' ? 'litro' : unidad}: $${(precio).toFixed(2)}
+                        Precio por ${unidad === 'l' ? 'litro' : unidad === 'unidad' ? 'unidad' : unidad}: $${precio.toFixed(2)}
                     </div>
                 </div>
                 
                 ${p.description ? `<p style="color: #666; margin: 15px 0; font-style: italic;">📝 ${p.description}</p>` : ''}
                 
-                <!-- SELECTOR DE CANTIDAD MEJORADO -->
                 <div style="
                     display: flex;
                     align-items: center;
@@ -180,8 +187,7 @@ function mostrarProductos() {
                             font-weight: bold;
                             color: #2c3e50;
                             cursor: pointer;
-                            transition: all 0.2s;
-                        " onmouseover="this.style.background='#e0e0e0'" onmouseout="this.style.background='#f1f3f4'">−</button>
+                        ">−</button>
                         
                         <span id="cant-${id}" style="
                             width: 80px;
@@ -206,15 +212,13 @@ function mostrarProductos() {
                             font-weight: bold;
                             color: #2c3e50;
                             cursor: pointer;
-                            transition: all 0.2s;
-                        " onmouseover="this.style.background='#e0e0e0'" onmouseout="this.style.background='#f1f3f4'">+</button>
+                        ">+</button>
                     </div>
                     <span style="font-weight: bold; color: #27ae60; font-size: 20px;">
                         $${(precio * min).toFixed(2)}
                     </span>
                 </div>
                 
-                <!-- BOTÓN AGREGAR AL CARRITO -->
                 <button onclick="window.comprarProducto('${id}', ${precio}, '${unidad}', '${p.name}')" style="
                     width: 100%;
                     padding: 15px;
@@ -226,16 +230,10 @@ function mostrarProductos() {
                     font-weight: bold;
                     cursor: pointer;
                     transition: all 0.3s;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 10px;
-                " onmouseover="this.style.background='linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)'; this.style.transform='scale(1.02)'" 
-                   onmouseout="this.style.background='linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)'; this.style.transform='scale(1)'">
+                ">
                     🛒 Agregar al Carrito
                 </button>
                 
-                <!-- BOTONES ADMIN (SOLO VISIBLES SI ESTÁ LOGEADO) -->
                 <div id="admin-actions-${id}" style="
                     display: ${usuarioActual ? 'flex' : 'none'};
                     justify-content: flex-end;
@@ -251,15 +249,8 @@ function mostrarProductos() {
                         border: none;
                         border-radius: 8px;
                         font-size: 14px;
-                        font-weight: bold;
                         cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        gap: 5px;
-                        transition: all 0.2s;
-                    " onmouseover="this.style.background='#2980b9'" onmouseout="this.style.background='#3498db'">
-                        ✏️ Editar Producto
-                    </button>
+                    ">✏️ Editar</button>
                     <button onclick="window.eliminarProducto('${id}')" style="
                         padding: 10px 20px;
                         background: #e74c3c;
@@ -267,15 +258,8 @@ function mostrarProductos() {
                         border: none;
                         border-radius: 8px;
                         font-size: 14px;
-                        font-weight: bold;
                         cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        gap: 5px;
-                        transition: all 0.2s;
-                    " onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">
-                        🗑️ Eliminar
-                    </button>
+                    ">🗑️ Eliminar</button>
                 </div>
             </div>
         `;
@@ -283,7 +267,7 @@ function mostrarProductos() {
     
     productosHTML += `</div>`;
     contenedor.innerHTML += productosHTML;
-    console.log(`✅ ${window.productos.length} productos mostrados con bordes ${usuarioActual ? 'y botones admin' : ''}`);
+    console.log(`✅ ${window.productos.length} productos de Firebase mostrados`);
 }
 
 // ===== 5. FUNCIONES DE CANTIDAD =====
@@ -293,7 +277,6 @@ window.cambiarCantidad = function(id, delta, min) {
         let valor = parseFloat(span.textContent) || min;
         valor = Math.max(min, valor + delta);
         
-        // Redondear según unidad
         const producto = window.productos.find(p => p.id === id);
         if (producto?.unit === 'unidad') {
             valor = Math.round(valor);
@@ -303,7 +286,6 @@ window.cambiarCantidad = function(id, delta, min) {
             span.textContent = valor.toFixed(1);
         }
         
-        // Actualizar total
         const totalSpan = span.parentElement.parentElement.querySelector('span:last-child');
         if (totalSpan && producto) {
             totalSpan.textContent = `$${(producto.basePrice * valor).toFixed(2)}`;
@@ -348,19 +330,14 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
         background: ${tipo === 'success' ? '#27ae60' : '#3498db'};
         color: white;
         border-radius: 10px;
-        z-index: 999999;
+        z-index: 9999999;
         animation: slideInRight 0.3s;
         box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        font-family: Arial, sans-serif;
-        font-size: 14px;
         font-weight: bold;
     `;
     notif.textContent = mensaje;
     document.body.appendChild(notif);
-    setTimeout(() => {
-        notif.style.animation = 'slideOutRight 0.3s';
-        setTimeout(() => notif.remove(), 300);
-    }, 3000);
+    setTimeout(() => notif.remove(), 3000);
 }
 
 // ===== 8. CONTADOR CARRITO =====
@@ -397,66 +374,112 @@ window.verCarrito = function() {
     }
 };
 
-// ===== 10. BOTÓN CARRITO =====
+// ===== 10. BOTÓN CARRITO (SIEMPRE VISIBLE) =====
 function crearBotonCarrito() {
-    if (document.getElementById('btn-carrito')) return;
+    const btnExistente = document.getElementById('btn-carrito');
+    if (btnExistente) btnExistente.remove();
     
     const btn = document.createElement('button');
     btn.id = 'btn-carrito';
     btn.innerHTML = '🛒 Carrito';
     btn.style.cssText = `
-        position: fixed;
-        bottom: 90px;
-        right: 20px;
-        padding: 12px 25px;
-        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-        color: white;
-        border: none;
-        border-radius: 50px;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-        z-index: 999998;
-        box-shadow: 0 4px 15px rgba(52,152,219,0.4);
-        transition: transform 0.3s;
+        position: fixed !important;
+        bottom: 20px !important;
+        right: 20px !important;
+        padding: 15px 30px !important;
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 50px !important;
+        font-size: 16px !important;
+        font-weight: bold !important;
+        cursor: pointer !important;
+        z-index: 9999998 !important;
+        box-shadow: 0 4px 15px rgba(52,152,219,0.4) !important;
     `;
-    btn.onmouseover = () => btn.style.transform = 'scale(1.05)';
-    btn.onmouseout = () => btn.style.transform = 'scale(1)';
     btn.onclick = window.verCarrito;
     document.body.appendChild(btn);
     actualizarContadorCarrito();
+    console.log("✅ Botón Carrito creado en DERECHA");
 }
 
-// ===== 11. BOTÓN ADMIN =====
+// ===== 11. BOTÓN ADMIN (SIEMPRE VISIBLE) =====
 function crearBotonAdmin() {
-    if (document.getElementById('btn-admin')) return;
+    const btnExistente = document.getElementById('btn-admin');
+    if (btnExistente) btnExistente.remove();
     
     const btn = document.createElement('button');
     btn.id = 'btn-admin';
     btn.innerHTML = '⚙️ Admin';
     btn.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        left: 20px;
-        padding: 12px 25px;
-        background: linear-gradient(135deg, #FFA000 0%, #FF8F00 100%);
-        color: white;
-        border: none;
-        border-radius: 50px;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-        z-index: 999999;
-        box-shadow: 0 4px 15px rgba(255,160,0,0.4);
-        transition: transform 0.3s;
+        position: fixed !important;
+        bottom: 20px !important;
+        left: 20px !important;
+        padding: 15px 30px !important;
+        background: linear-gradient(135deg, #FFA000 0%, #FF8F00 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 50px !important;
+        font-size: 16px !important;
+        font-weight: bold !important;
+        cursor: pointer !important;
+        z-index: 9999999 !important;
+        box-shadow: 0 4px 15px rgba(255,160,0,0.4) !important;
     `;
-    btn.onmouseover = () => btn.style.transform = 'scale(1.05)';
-    btn.onmouseout = () => btn.style.transform = 'scale(1)';
     btn.onclick = mostrarLogin;
     document.body.appendChild(btn);
+    console.log("✅ Botón Admin creado en IZQUIERDA");
 }
 
-// ===== 12. LOGIN =====
+// ===== 12. WHATSAPP (VISIBLE SIEMPRE) =====
+function crearBotonWhatsApp() {
+    setTimeout(() => {
+        let whatsapp = document.querySelector('a[href*="wa.me"], a[href*="whatsapp"], [class*="whatsapp"], [id*="whatsapp"]');
+        
+        if (whatsapp) {
+            whatsapp.style.setProperty('position', 'fixed', 'important');
+            whatsapp.style.setProperty('left', '20px', 'important');
+            whatsapp.style.setProperty('bottom', '100px', 'important');
+            whatsapp.style.setProperty('z-index', '99999999', 'important');
+            whatsapp.style.setProperty('width', '60px', 'important');
+            whatsapp.style.setProperty('height', '60px', 'important');
+            whatsapp.style.setProperty('border-radius', '50%', 'important');
+            whatsapp.style.setProperty('background', '#25D366', 'important');
+            whatsapp.style.setProperty('display', 'flex', 'important');
+            whatsapp.style.setProperty('align-items', 'center', 'important');
+            whatsapp.style.setProperty('justify-content', 'center', 'important');
+            whatsapp.style.setProperty('box-shadow', '0 4px 15px rgba(37,211,102,0.4)', 'important');
+            console.log("✅ WhatsApp reposicionado: izquierda, bottom 100px");
+        } else {
+            // Crear WhatsApp si no existe
+            const nuevoWA = document.createElement('a');
+            nuevoWA.href = 'https://wa.me/5356603249';
+            nuevoWA.target = '_blank';
+            nuevoWA.innerHTML = '📱';
+            nuevoWA.style.cssText = `
+                position: fixed !important;
+                left: 20px !important;
+                bottom: 100px !important;
+                width: 60px !important;
+                height: 60px !important;
+                background: #25D366 !important;
+                color: white !important;
+                border-radius: 50% !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                font-size: 30px !important;
+                text-decoration: none !important;
+                z-index: 99999999 !important;
+                box-shadow: 0 4px 15px rgba(37,211,102,0.4) !important;
+            `;
+            document.body.appendChild(nuevoWA);
+            console.log("✅ WhatsApp creado desde cero");
+        }
+    }, 1500);
+}
+
+// ===== 13. LOGIN =====
 window.mostrarLogin = async function() {
     const email = prompt("📧 Email:");
     if (!email) return;
@@ -471,17 +494,16 @@ window.mostrarLogin = async function() {
         const btnAdmin = document.getElementById('btn-admin');
         if (btnAdmin) {
             btnAdmin.innerHTML = '👤 Admin Panel';
-            btnAdmin.style.background = 'linear-gradient(135deg, #27ae60 0%, #219a52 100%)';
             btnAdmin.onclick = mostrarPanelAdmin;
         }
         
-        mostrarProductos(); // Recargar para mostrar botones de edición
+        mostrarProductos();
     } catch (error) {
         mostrarNotificacion('❌ Email o contraseña incorrectos', 'error');
     }
 };
 
-// ===== 13. LOGOUT =====
+// ===== 14. LOGOUT =====
 window.logout = async function() {
     await signOut(auth);
     usuarioActual = null;
@@ -490,20 +512,16 @@ window.logout = async function() {
     const btnAdmin = document.getElementById('btn-admin');
     if (btnAdmin) {
         btnAdmin.innerHTML = '⚙️ Admin';
-        btnAdmin.style.background = 'linear-gradient(135deg, #FFA000 0%, #FF8F00 100%)';
         btnAdmin.onclick = mostrarLogin;
     }
     
-    mostrarProductos(); // Recargar para ocultar botones de edición
+    mostrarProductos();
 };
 
-// ===== 14. PANEL ADMIN =====
+// ===== 15. PANEL ADMIN =====
 window.mostrarPanelAdmin = function() {
     const action = prompt(
-        "👤 PANEL DE ADMINISTRACIÓN\n\n" +
-        "1. ➕ Agregar nuevo producto\n" +
-        "2. 🔒 Cerrar sesión\n\n" +
-        "Selecciona una opción (1 o 2):"
+        "👤 PANEL ADMIN\n\n1. ➕ Agregar producto\n2. 🔒 Cerrar sesión\n\nSelecciona 1 o 2:"
     );
     
     if (action === '1') {
@@ -513,7 +531,7 @@ window.mostrarPanelAdmin = function() {
     }
 };
 
-// ===== 15. AGREGAR PRODUCTO (CON LITROS INCLUIDO) =====
+// ===== 16. AGREGAR PRODUCTO =====
 window.agregarProducto = async function() {
     const nombre = prompt("📦 Nombre del producto:");
     if (!nombre) return;
@@ -521,14 +539,10 @@ window.agregarProducto = async function() {
     const precio = parseFloat(prompt("💰 Precio:"));
     if (!precio || precio <= 0) return;
     
-    const unidad = prompt("⚖️ Unidad de medida:\n- lb (libras)\n- kg (kilos)\n- l (litros)\n- unidad", "lb");
-    if (!unidad || !['lb', 'kg', 'l', 'unidad'].includes(unidad)) {
-        mostrarNotificacion('❌ Unidad no válida', 'error');
-        return;
-    }
+    const unidad = prompt("⚖️ Unidad (lb/kg/l/unidad):", "lb");
+    if (!unidad || !['lb', 'kg', 'l', 'unidad'].includes(unidad)) return;
     
-    const descripcion = prompt("📝 Descripción del producto (opcional):") || "";
-    
+    const descripcion = prompt("📝 Descripción (opcional):") || "";
     const minQty = unidad === 'unidad' ? 1 : 0.5;
     
     try {
@@ -539,18 +553,15 @@ window.agregarProducto = async function() {
             unit: unidad,
             description: descripcion,
             minQty: minQty,
-            available: true,
-            createdAt: new Date().toISOString()
+            available: true
         });
-        
-        mostrarNotificacion('✅ Producto agregado correctamente', 'success');
+        mostrarNotificacion('✅ Producto agregado', 'success');
     } catch (error) {
-        mostrarNotificacion('❌ Error al agregar producto', 'error');
-        console.error(error);
+        mostrarNotificacion('❌ Error al agregar', 'error');
     }
 };
 
-// ===== 16. EDITAR PRODUCTO (NUEVA FUNCIÓN) =====
+// ===== 17. EDITAR PRODUCTO =====
 window.editarProducto = async function(id) {
     if (!usuarioActual) {
         mostrarNotificacion('❌ Debes iniciar sesión', 'error');
@@ -560,109 +571,54 @@ window.editarProducto = async function(id) {
     const producto = window.productos.find(p => p.id === id);
     if (!producto) return;
     
-    const accion = prompt(
-        `✏️ EDITAR PRODUCTO: ${producto.name}\n\n` +
-        `1. 📝 Cambiar nombre\n` +
-        `2. 💰 Cambiar precio\n` +
-        `3. ⚖️ Cambiar unidad\n` +
-        `4. 📋 Cambiar descripción\n` +
-        `5. 🟢 Cambiar disponibilidad\n` +
-        `6. ❌ Cancelar\n\n` +
-        `Selecciona una opción (1-6):`
+    const opcion = prompt(
+        `✏️ EDITAR ${producto.name}\n\n1. Nombre\n2. Precio\n3. Unidad\n4. Descripción\n5. Disponibilidad\n6. Cancelar`,
+        '6'
     );
     
     try {
-        switch(accion) {
+        switch(opcion) {
             case '1':
                 const nuevoNombre = prompt("Nuevo nombre:", producto.name);
-                if (nuevoNombre && nuevoNombre.trim()) {
-                    await update(ref(db, `productos/${id}`), { name: nuevoNombre.trim() });
-                    mostrarNotificacion('✅ Nombre actualizado', 'success');
-                }
+                if (nuevoNombre) await update(ref(db, `productos/${id}`), { name: nuevoNombre });
                 break;
-                
             case '2':
                 const nuevoPrecio = parseFloat(prompt("Nuevo precio:", producto.basePrice));
-                if (nuevoPrecio && nuevoPrecio > 0) {
-                    await update(ref(db, `productos/${id}`), { basePrice: nuevoPrecio });
-                    mostrarNotificacion('✅ Precio actualizado', 'success');
-                }
+                if (nuevoPrecio > 0) await update(ref(db, `productos/${id}`), { basePrice: nuevoPrecio });
                 break;
-                
             case '3':
                 const nuevaUnidad = prompt("Nueva unidad (lb/kg/l/unidad):", producto.unit);
-                if (nuevaUnidad && ['lb', 'kg', 'l', 'unidad'].includes(nuevaUnidad)) {
-                    const nuevoMin = nuevaUnidad === 'unidad' ? 1 : 0.5;
-                    await update(ref(db, `productos/${id}`), { 
-                        unit: nuevaUnidad,
-                        minQty: nuevoMin
-                    });
-                    mostrarNotificacion('✅ Unidad actualizada', 'success');
-                }
+                if (nuevaUnidad) await update(ref(db, `productos/${id}`), { 
+                    unit: nuevaUnidad,
+                    minQty: nuevaUnidad === 'unidad' ? 1 : 0.5
+                });
                 break;
-                
             case '4':
                 const nuevaDesc = prompt("Nueva descripción:", producto.description || '');
-                await update(ref(db, `productos/${id}`), { description: nuevaDesc || '' });
-                mostrarNotificacion('✅ Descripción actualizada', 'success');
+                await update(ref(db, `productos/${id}`), { description: nuevaDesc });
                 break;
-                
             case '5':
-                const nuevoEstado = !producto.available;
-                await update(ref(db, `productos/${id}`), { available: nuevoEstado });
-                mostrarNotificacion(`✅ Producto ${nuevoEstado ? 'disponible' : 'no disponible'}`, 'success');
+                await update(ref(db, `productos/${id}`), { available: !producto.available });
                 break;
-                
-            case '6':
-                mostrarNotificacion('❌ Edición cancelada', 'info');
-                break;
-                
-            default:
-                mostrarNotificacion('❌ Opción no válida', 'error');
         }
+        mostrarNotificacion('✅ Producto actualizado', 'success');
     } catch (error) {
         mostrarNotificacion('❌ Error al editar', 'error');
-        console.error(error);
     }
 };
 
-// ===== 17. ELIMINAR PRODUCTO =====
+// ===== 18. ELIMINAR PRODUCTO =====
 window.eliminarProducto = async function(id) {
     if (!usuarioActual) {
         mostrarNotificacion('❌ Debes iniciar sesión', 'error');
         return;
     }
     
-    if (confirm("⚠️ ¿Estás seguro de eliminar este producto?")) {
-        try {
-            await remove(ref(db, `productos/${id}`));
-            mostrarNotificacion('✅ Producto eliminado', 'success');
-        } catch (error) {
-            mostrarNotificacion('❌ Error al eliminar', 'error');
-        }
+    if (confirm("⚠️ ¿Eliminar este producto?")) {
+        await remove(ref(db, `productos/${id}`));
+        mostrarNotificacion('✅ Producto eliminado', 'success');
     }
 };
-
-// ===== 18. WHATSAPP =====
-function configurarWhatsApp() {
-    setTimeout(() => {
-        const wa = document.querySelector('a[href*="wa.me"], a[href*="whatsapp"], [class*="whats"], [id*="whats"]');
-        if (wa) {
-            wa.style.position = 'fixed';
-            wa.style.left = '20px';
-            wa.style.bottom = '90px';
-            wa.style.zIndex = '999990';
-            wa.style.width = '55px';
-            wa.style.height = '55px';
-            wa.style.borderRadius = '50%';
-            wa.style.boxShadow = '0 4px 15px rgba(37,211,102,0.4)';
-            wa.style.transition = 'transform 0.3s';
-            wa.onmouseover = () => wa.style.transform = 'scale(1.1)';
-            wa.onmouseout = () => wa.style.transform = 'scale(1)';
-            console.log("✅ WhatsApp configurado");
-        }
-    }, 2000);
-}
 
 // ===== 19. ESTILOS GLOBALES =====
 function agregarEstilos() {
@@ -676,14 +632,7 @@ function agregarEstilos() {
             from { transform: translateX(0); opacity: 1; }
             to { transform: translateX(100%); opacity: 0; }
         }
-        * {
-            box-sizing: border-box;
-        }
-        body {
-            margin: 0;
-            padding: 0;
-            background: #f5f5f5;
-        }
+        body { margin: 0; padding: 0; background: #f5f5f5; }
     `;
     document.head.appendChild(estilos);
 }
@@ -704,27 +653,19 @@ onValue(productosRef, (snapshot) => {
             available: data[key].available !== false
         }));
         
-        console.log(`✅ ${window.productos.length} productos cargados de Firebase`);
-        console.log('📋 Productos:', window.productos.map(p => p.name).join(', '));
-        
-        mostrarProductos();
-    } else {
-        console.log('📭 No hay productos en Firebase');
+        console.log(`✅ ${window.productos.length} productos de Firebase`);
         mostrarProductos();
     }
-}, (error) => {
-    console.error('❌ Error de Firebase:', error);
-    mostrarNotificacion('❌ Error de conexión con Firebase', 'error');
 });
 
 // ===== 21. INICIALIZAR =====
 function inicializar() {
-    console.log("🚀 Inicializando sistema Berkot...");
+    console.log("🚀 Inicializando sistema...");
     
     agregarEstilos();
     crearBotonCarrito();
     crearBotonAdmin();
-    configurarWhatsApp();
+    crearBotonWhatsApp();
     
     console.log("✅✅✅ SISTEMA BERKOT LISTO");
     console.log("📞 Número: +53 5660 3249");
