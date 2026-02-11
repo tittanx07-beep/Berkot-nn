@@ -1,4 +1,4 @@
-// ========== BERKOT FIREBASE - VERSIÓN DEFINITIVA CORREGIDA ==========
+// ========== BERKOT FIREBASE - VERSIÓN DEFINITIVA CON CARRITO Y CANTIDADES ==========
 // ========== CON SINCRONIZACIÓN INSTANTÁNEA EN TODOS LOS DISPOSITIVOS ==========
 
 console.log("🔥 BERKOT FIREBASE - Iniciando sistema...");
@@ -28,21 +28,17 @@ const auth = getAuth(app);
 // ===== VARIABLE GLOBAL DE PRODUCTOS =====
 window.storeData = window.storeData || { products: [] };
 
-// ===== FUNCIÓN PRINCIPAL PARA MOSTRAR PRODUCTOS =====
+// ===== FUNCIÓN PARA MOSTRAR PRODUCTOS CON CANTIDADES =====
 function mostrarProductosEnPagina() {
     console.log("🔄 Actualizando productos en la página...");
     
-    // 1. BUSCAR TODOS LOS POSIBLES CONTENEDORES DE PRODUCTOS
+    // 1. BUSCAR CONTENEDORES DE PRODUCTOS
     let contenedores = document.querySelectorAll('.products, .product-grid, #products, .product-list, [class*="producto"], [class*="product"], [id*="producto"], [id*="product"]');
     
-    // 2. SI NO HAY CONTENEDORES, CREAR UNO AUTOMÁTICAMENTE
+    // 2. SI NO HAY CONTENEDORES, CREAR UNO
     if (contenedores.length === 0) {
         console.log("📦 No hay contenedor de productos. Creando uno...");
-        
-        // Buscar dónde insertar los productos
         const main = document.querySelector('main') || document.querySelector('.content') || document.querySelector('body');
-        
-        // Crear sección de productos
         const seccionProductos = document.createElement('div');
         seccionProductos.id = 'seccion-productos-berkot';
         seccionProductos.style.cssText = `
@@ -51,18 +47,15 @@ function mostrarProductosEnPagina() {
             padding: 20px;
             font-family: Arial, sans-serif;
         `;
-        
         main.appendChild(seccionProductos);
         contenedores = [seccionProductos];
-        console.log("✅ Contenedor de productos creado automáticamente");
+        console.log("✅ Contenedor de productos creado");
     }
     
-    // 3. MOSTRAR PRODUCTOS EN CADA CONTENEDOR
+    // 3. MOSTRAR PRODUCTOS CON SELECTOR DE CANTIDAD
     contenedores.forEach(contenedor => {
-        // Guardar referencia para futuras actualizaciones
         window.contenedorProductos = contenedor;
         
-        // Generar HTML de productos
         let html = '';
         
         if (!window.storeData.products || window.storeData.products.length === 0) {
@@ -75,10 +68,15 @@ function mostrarProductosEnPagina() {
         } else {
             html = `
                 <h2 style="text-align: center; margin: 30px 0; color: #333;">🛍️ Nuestros Productos</h2>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; padding: 20px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; padding: 20px;">
             `;
             
             window.storeData.products.forEach(p => {
+                // Determinar unidad y paso mínimo
+                const unidad = p.unit || 'lb';
+                const paso = unidad === 'unidad' ? 1 : 0.5;
+                const min = p.minQty || (unidad === 'unidad' ? 1 : 0.5);
+                
                 html += `
                     <div style="
                         border: 1px solid #e0e0e0;
@@ -86,30 +84,88 @@ function mostrarProductosEnPagina() {
                         padding: 20px;
                         background: white;
                         box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-                        transition: transform 0.3s, box-shadow 0.3s;
                         display: flex;
                         flex-direction: column;
+                        transition: transform 0.3s, box-shadow 0.3s;
                     " 
                     onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)';"
                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)';">
-                        <h3 style="margin: 0 0 10px 0; color: #333; font-size: 1.2em;">${p.name || 'Producto'}</h3>
-                        <p style="font-size: 28px; color: #27ae60; font-weight: bold; margin: 10px 0; display: flex; align-items: baseline;">
+                        
+                        <!-- NOMBRE Y PRECIO -->
+                        <h3 style="margin: 0 0 10px 0; color: #333; font-size: 1.3em;">${p.name || 'Producto'}</h3>
+                        <p style="font-size: 28px; color: #27ae60; font-weight: bold; margin: 10px 0;">
                             $${p.basePrice?.toFixed(2) || '0.00'}
-                            <span style="font-size: 14px; color: #666; font-weight: normal; margin-left: 5px;">/${p.unit || 'lb'}</span>
+                            <span style="font-size: 14px; color: #666; font-weight: normal;">/${unidad}</span>
                         </p>
                         ${p.description ? `<p style="color: #666; margin: 10px 0; line-height: 1.4;">${p.description}</p>` : ''}
-                        <div style="margin-top: auto; padding-top: 15px;">
-                            <span style="
-                                background: ${p.available !== false ? '#e8f5e9' : '#ffebee'};
-                                color: ${p.available !== false ? '#2e7d32' : '#c62828'};
-                                padding: 4px 12px;
-                                border-radius: 20px;
-                                font-size: 12px;
-                                font-weight: bold;
-                            ">
-                                ${p.available !== false ? '✓ Disponible' : '✗ Agotado'}
+                        
+                        <!-- SELECTOR DE CANTIDAD -->
+                        <div style="
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            margin: 15px 0;
+                            padding: 10px;
+                            background: #f8f9fa;
+                            border-radius: 8px;
+                        ">
+                            <span style="color: #666; font-weight: bold;">Cantidad:</span>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <button onclick="this.parentNode.querySelector('input').stepDown(); this.parentNode.querySelector('input').dispatchEvent(new Event('change'))" style="
+                                    width: 30px;
+                                    height: 30px;
+                                    background: #fff;
+                                    border: 1px solid #ddd;
+                                    border-radius: 5px;
+                                    font-size: 18px;
+                                    font-weight: bold;
+                                    cursor: pointer;
+                                ">-</button>
+                                
+                                <input type="number" id="cantidad-${p.id}" value="${min}" min="${min}" step="${paso}" style="
+                                    width: 70px;
+                                    height: 35px;
+                                    text-align: center;
+                                    border: 1px solid #ddd;
+                                    border-radius: 5px;
+                                    font-size: 16px;
+                                " onchange="actualizarPrecioTotal('${p.id}', ${p.basePrice})">
+                                
+                                <button onclick="this.parentNode.querySelector('input').stepUp(); this.parentNode.querySelector('input').dispatchEvent(new Event('change'))" style="
+                                    width: 30px;
+                                    height: 30px;
+                                    background: #fff;
+                                    border: 1px solid #ddd;
+                                    border-radius: 5px;
+                                    font-size: 18px;
+                                    font-weight: bold;
+                                    cursor: pointer;
+                                ">+</button>
+                            </div>
+                            <span id="total-${p.id}" style="color: #27ae60; font-weight: bold; font-size: 16px;">
+                                $${(p.basePrice * min).toFixed(2)}
                             </span>
                         </div>
+                        
+                        <!-- BOTÓN AGREGAR AL CARRITO -->
+                        <button onclick="agregarAlCarrito('${p.id}', '${p.name}', ${p.basePrice}, '${unidad}')" style="
+                            background: #27ae60;
+                            color: white;
+                            border: none;
+                            padding: 12px 20px;
+                            border-radius: 8px;
+                            font-size: 16px;
+                            font-weight: bold;
+                            cursor: pointer;
+                            margin-top: 5px;
+                            transition: background 0.3s;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 10px;
+                        " onmouseover="this.style.background='#219a52'" onmouseout="this.style.background='#27ae60'">
+                            🛒 Agregar al Carrito
+                        </button>
                     </div>
                 `;
             });
@@ -117,12 +173,180 @@ function mostrarProductosEnPagina() {
             html += `</div>`;
         }
         
-        // REEMPLAZAR TODO EL CONTENIDO DEL CONTENEDOR
         contenedor.innerHTML = html;
     });
     
-    console.log(`✅ ${window.storeData.products?.length || 0} productos mostrados en la página`);
+    console.log(`✅ ${window.storeData.products?.length || 0} productos mostrados`);
 }
+
+// ===== ACTUALIZAR PRECIO TOTAL SEGÚN CANTIDAD =====
+window.actualizarPrecioTotal = function(id, precio) {
+    const input = document.getElementById(`cantidad-${id}`);
+    const totalSpan = document.getElementById(`total-${id}`);
+    if (input && totalSpan) {
+        const cantidad = parseFloat(input.value) || 0;
+        const total = precio * cantidad;
+        totalSpan.textContent = `$${total.toFixed(2)}`;
+    }
+};
+
+// ===== AGREGAR AL CARRITO CON CANTIDAD =====
+window.agregarAlCarrito = function(id, nombre, precio, unidad) {
+    // Obtener cantidad del selector
+    const input = document.getElementById(`cantidad-${id}`);
+    const cantidad = input ? parseFloat(input.value) : 1;
+    
+    // Obtener carrito actual
+    let carrito = JSON.parse(localStorage.getItem('berkot_carrito') || '[]');
+    
+    // Buscar si el producto ya está en el carrito
+    const existente = carrito.find(item => item.id === id);
+    
+    if (existente) {
+        existente.cantidad = (existente.cantidad || 0) + cantidad;
+    } else {
+        carrito.push({
+            id: id,
+            nombre: nombre,
+            precio: precio,
+            unidad: unidad,
+            cantidad: cantidad
+        });
+    }
+    
+    // Guardar carrito
+    localStorage.setItem('berkot_carrito', JSON.stringify(carrito));
+    
+    // Mostrar notificación
+    const notificacion = document.createElement('div');
+    notificacion.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #27ae60;
+        color: white;
+        padding: 15px 25px;
+        border-radius: 10px;
+        z-index: 999999;
+        animation: slideInRight 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        font-family: Arial, sans-serif;
+    `;
+    notificacion.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 20px;">✅</span>
+            <div>
+                <strong>${cantidad} ${unidad} de ${nombre}</strong><br>
+                <small style="opacity: 0.9;">agregado al carrito</small>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(notificacion);
+    
+    setTimeout(() => {
+        notificacion.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => notificacion.remove(), 300);
+    }, 3000);
+    
+    // Actualizar contador del carrito
+    actualizarContadorCarrito();
+    
+    console.log(`🛒 Agregado: ${cantidad} ${unidad} de ${nombre} - $${(precio * cantidad).toFixed(2)}`);
+};
+
+// ===== ACTUALIZAR CONTADOR DEL CARRITO =====
+window.actualizarContadorCarrito = function() {
+    const carrito = JSON.parse(localStorage.getItem('berkot_carrito') || '[]');
+    const totalItems = carrito.reduce((sum, item) => sum + (item.cantidad || 1), 0);
+    
+    // Buscar o crear contador
+    let contador = document.getElementById('carrito-contador');
+    if (!contador) {
+        contador = document.createElement('span');
+        contador.id = 'carrito-contador';
+        contador.style.cssText = `
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 999998;
+        `;
+        document.body.appendChild(contador);
+    }
+    
+    contador.textContent = totalItems;
+    contador.style.display = totalItems > 0 ? 'flex' : 'none';
+};
+
+// ===== VER CARRITO =====
+window.verCarrito = function() {
+    const carrito = JSON.parse(localStorage.getItem('berkot_carrito') || '[]');
+    
+    if (carrito.length === 0) {
+        alert("🛒 Tu carrito está vacío");
+        return;
+    }
+    
+    let mensaje = "🛍️ MI CARRITO:\n\n";
+    let total = 0;
+    
+    carrito.forEach((item, index) => {
+        const subtotal = item.precio * item.cantidad;
+        total += subtotal;
+        mensaje += `${index + 1}. ${item.nombre}\n`;
+        mensaje += `   ${item.cantidad} ${item.unidad || 'lb'} x $${item.precio} = $${subtotal.toFixed(2)}\n\n`;
+    });
+    
+    mensaje += `💰 TOTAL: $${total.toFixed(2)}`;
+    
+    // Agregar botones de acción
+    if (confirm(mensaje + "\n\n¿Vaciar carrito?")) {
+        localStorage.removeItem('berkot_carrito');
+        actualizarContadorCarrito();
+        alert("✅ Carrito vaciado");
+    }
+};
+
+// ===== BOTÓN DE CARRITO FLOTANTE =====
+setTimeout(() => {
+    const btnCarrito = document.createElement('button');
+    btnCarrito.id = 'btn-carrito';
+    btnCarrito.innerHTML = '🛒';
+    btnCarrito.style.cssText = `
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        background: #3498db;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        font-size: 24px;
+        cursor: pointer;
+        z-index: 999997;
+        box-shadow: 0 4px 15px rgba(52,152,219,0.4);
+        transition: transform 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+    btnCarrito.onmouseover = () => btnCarrito.style.transform = 'scale(1.1)';
+    btnCarrito.onmouseout = () => btnCarrito.style.transform = 'scale(1)';
+    btnCarrito.onclick = window.verCarrito;
+    document.body.appendChild(btnCarrito);
+    
+    actualizarContadorCarrito();
+}, 1500);
 
 // ===== ESCUCHAR CAMBIOS EN TIEMPO REAL =====
 const productosRef = ref(db, 'productos');
@@ -131,7 +355,6 @@ onValue(productosRef, (snapshot) => {
     const productos = snapshot.val();
     
     if (productos) {
-        // Convertir objeto de Firebase a array y GUARDAR EN TIEMPO REAL
         window.storeData.products = Object.keys(productos).map(key => ({
             id: key,
             name: productos[key].name || "Producto",
@@ -144,17 +367,11 @@ onValue(productosRef, (snapshot) => {
         }));
         
         console.log(`✅ ${window.storeData.products.length} productos cargados desde Firebase`);
-        
-        // ACTUALIZAR LA PÁGINA INMEDIATAMENTE
         mostrarProductosEnPagina();
-        
-        // Guardar copia local para respaldo
         localStorage.setItem('berkot_productos_backup', JSON.stringify(window.storeData.products));
     }
 }, (error) => {
     console.error("❌ Error cargando productos:", error);
-    
-    // Intentar cargar de respaldo local
     const backup = localStorage.getItem('berkot_productos_backup');
     if (backup) {
         window.storeData.products = JSON.parse(backup);
@@ -163,7 +380,7 @@ onValue(productosRef, (snapshot) => {
     }
 });
 
-// ===== FUNCIÓN PARA GUARDAR PRODUCTO =====
+// ===== FUNCIONES ADMIN =====
 window.guardarProducto = async function(producto) {
     try {
         if (!producto.id) {
@@ -189,7 +406,6 @@ window.guardarProducto = async function(producto) {
                 icon: producto.icon || "fa-box"
             });
         }
-        
         console.log("✅ Producto guardado:", producto.name);
         return true;
     } catch (error) {
@@ -199,10 +415,8 @@ window.guardarProducto = async function(producto) {
     }
 };
 
-// ===== FUNCIÓN PARA ELIMINAR PRODUCTO =====
 window.eliminarProducto = async function(id) {
     if (!confirm("¿Estás seguro de eliminar este producto?")) return false;
-    
     try {
         await remove(ref(db, `productos/${id}`));
         console.log("✅ Producto eliminado");
@@ -214,7 +428,6 @@ window.eliminarProducto = async function(id) {
     }
 };
 
-// ===== FUNCIÓN PARA INICIAR SESIÓN =====
 window.loginAdmin = async function(email, password) {
     try {
         await signInWithEmailAndPassword(auth, email, password);
@@ -227,22 +440,16 @@ window.loginAdmin = async function(email, password) {
     }
 };
 
-// ===== FUNCIÓN PARA CERRAR SESIÓN =====
 window.logoutAdmin = async function() {
     await signOut(auth);
     console.log("✅ Sesión cerrada");
 };
 
-// ===== CREAR PANEL ADMIN Y BOTÓN FLOTANTE =====
+// ===== PANEL ADMIN =====
 setTimeout(() => {
-    // ELIMINAR ELEMENTOS ANTERIORES
     const btnExistente = document.getElementById('btn-admin-berkot');
     if (btnExistente) btnExistente.remove();
     
-    const panelExistente = document.getElementById('panel-admin-berkot');
-    if (panelExistente) panelExistente.remove();
-    
-    // ===== BOTÓN ADMIN FLOTANTE =====
     const btnAdmin = document.createElement('button');
     btnAdmin.id = 'btn-admin-berkot';
     btnAdmin.innerHTML = '⚙️ Admin Panel';
@@ -260,19 +467,13 @@ setTimeout(() => {
         cursor: pointer;
         z-index: 999999;
         box-shadow: 0 4px 15px rgba(255,160,0,0.5);
-        transition: transform 0.3s, box-shadow 0.3s;
+        transition: transform 0.3s;
     `;
-    btnAdmin.onmouseover = () => {
-        btnAdmin.style.transform = 'scale(1.05)';
-        btnAdmin.style.boxShadow = '0 8px 25px rgba(255,160,0,0.6)';
-    };
-    btnAdmin.onmouseout = () => {
-        btnAdmin.style.transform = 'scale(1)';
-        btnAdmin.style.boxShadow = '0 4px 15px rgba(255,160,0,0.5)';
-    };
+    btnAdmin.onmouseover = () => btnAdmin.style.transform = 'scale(1.05)';
+    btnAdmin.onmouseout = () => btnAdmin.style.transform = 'scale(1)';
     document.body.appendChild(btnAdmin);
     
-    // ===== PANEL ADMIN =====
+    // Panel admin (versión simplificada - igual que antes)
     const panel = document.createElement('div');
     panel.id = 'panel-admin-berkot';
     panel.style.cssText = `
@@ -294,125 +495,46 @@ setTimeout(() => {
     `;
     
     panel.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="color: #FFA000; margin: 0; font-size: 24px;">
-                🔥 Berkot Admin
-            </h2>
-            <button id="cerrar-panel" style="
-                background: none;
-                border: none;
-                font-size: 28px;
-                cursor: pointer;
-                color: #666;
-                padding: 0 10px;
-            ">&times;</button>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <h2 style="color: #FFA000;">🔥 Admin</h2>
+            <button id="cerrar-panel" style="background: none; border: none; font-size: 24px;">&times;</button>
         </div>
         
-        <div id="login-section" style="
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 30px;
-            border-radius: 15px;
-            color: white;
-        ">
-            <h3 style="margin-top: 0; color: white;">🔐 Acceso Administrador</h3>
-            <input type="email" id="admin-email" placeholder="Correo electrónico" 
-                   style="width: 100%; padding: 12px; margin-bottom: 15px; border: none; border-radius: 8px; font-size: 14px;">
-            <input type="password" id="admin-password" placeholder="Contraseña" 
-                   style="width: 100%; padding: 12px; margin-bottom: 15px; border: none; border-radius: 8px; font-size: 14px;">
-            <button id="btn-login" style="
-                width: 100%;
-                padding: 12px;
-                background: white;
-                color: #764ba2;
-                border: none;
-                border-radius: 8px;
-                font-size: 16px;
-                font-weight: bold;
-                cursor: pointer;
-                transition: transform 0.2s;
-            ">Iniciar Sesión</button>
-            <p style="margin-top: 15px; font-size: 12px; opacity: 0.9; text-align: center;">
-                Usa: admin@berkot.com / Berkot2026Admin
-            </p>
+        <div id="login-section">
+            <input type="email" id="admin-email" placeholder="Email" style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
+            <input type="password" id="admin-password" placeholder="Contraseña" style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
+            <button id="btn-login" style="width:100%; padding:12px; background:#FFA000; color:white; border:none; border-radius:8px;">Entrar</button>
         </div>
         
-        <div id="admin-section" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="color: #333;">➕ Agregar Producto</h3>
-                <button id="btn-logout" style="
-                    padding: 8px 16px;
-                    background: #e74c3c;
-                    color: white;
-                    border: none;
-                    border-radius: 5px;
-                    cursor: pointer;
-                ">Cerrar Sesión</button>
+        <div id="admin-section" style="display:none;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h3>➕ Agregar Producto</h3>
+                <button id="btn-logout" style="padding:8px 16px; background:#e74c3c; color:white; border:none; border-radius:5px;">Salir</button>
             </div>
             
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                <input type="text" id="product-name" placeholder="Nombre del producto" 
-                       style="width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                    <input type="number" id="product-price" placeholder="Precio" step="0.01"
-                           style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
-                    <select id="product-unit" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
-                        <option value="lb">Libras (lb)</option>
-                        <option value="kg">Kilogramos (kg)</option>
-                        <option value="unidad">Unidad</option>
-                        <option value="oz">Onzas (oz)</option>
-                    </select>
-                </div>
-                
-                <textarea id="product-description" placeholder="Descripción del producto" rows="3"
-                          style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; resize: vertical;"></textarea>
-                
-                <button id="btn-save" style="
-                    width: 100%;
-                    padding: 14px;
-                    background: #27ae60;
-                    color: white;
-                    border: none;
-                    border-radius: 8px;
-                    font-size: 16px;
-                    font-weight: bold;
-                    cursor: pointer;
-                    transition: background 0.3s;
-                ">💾 Guardar Producto</button>
-            </div>
-            
-            <h3 style="color: #333; margin-bottom: 15px;">📋 Productos Actuales</h3>
-            <div id="productos-lista" style="
-                max-height: 300px;
-                overflow-y: auto;
-                border: 1px solid #eee;
-                border-radius: 10px;
-                padding: 15px;
-                background: #fafafa;
-            "></div>
+            <input type="text" id="product-name" placeholder="Nombre" style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
+            <input type="number" id="product-price" placeholder="Precio" step="0.01" style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
+            <select id="product-unit" style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
+                <option value="lb">Libras (lb)</option>
+                <option value="kg">Kilogramos (kg)</option>
+                <option value="unidad">Unidad</option>
+            </select>
+            <textarea id="product-description" placeholder="Descripción" rows="3" style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;"></textarea>
+            <button id="btn-save" style="width:100%; padding:12px; background:#27ae60; color:white; border:none; border-radius:8px;">Guardar Producto</button>
         </div>
     `;
     
     document.body.appendChild(panel);
     
-    // ===== EVENTOS DEL PANEL =====
-    btnAdmin.onclick = () => {
-        panel.style.display = 'block';
-        actualizarListaProductos();
-    };
-    
-    document.getElementById('cerrar-panel').onclick = () => {
-        panel.style.display = 'none';
-    };
+    btnAdmin.onclick = () => panel.style.display = 'block';
+    document.getElementById('cerrar-panel').onclick = () => panel.style.display = 'none';
     
     document.getElementById('btn-login').onclick = async () => {
         const email = document.getElementById('admin-email').value;
-        const password = document.getElementById('admin-password').value;
-        
-        if (await window.loginAdmin(email, password)) {
+        const pass = document.getElementById('admin-password').value;
+        if (await window.loginAdmin(email, pass)) {
             document.getElementById('login-section').style.display = 'none';
             document.getElementById('admin-section').style.display = 'block';
-            actualizarListaProductos();
         }
     };
     
@@ -420,93 +542,52 @@ setTimeout(() => {
         await window.logoutAdmin();
         document.getElementById('login-section').style.display = 'block';
         document.getElementById('admin-section').style.display = 'none';
-        document.getElementById('admin-email').value = '';
-        document.getElementById('admin-password').value = '';
     };
     
     document.getElementById('btn-save').onclick = async () => {
-        const nameInput = document.getElementById('product-name');
-        const priceInput = document.getElementById('product-price');
-        
-        if (!nameInput.value.trim()) {
-            alert("❌ Por favor ingresa un nombre para el producto");
-            return;
-        }
-        
-        if (!priceInput.value || parseFloat(priceInput.value) <= 0) {
-            alert("❌ Por favor ingresa un precio válido");
-            return;
-        }
-        
         const producto = {
-            name: nameInput.value.trim(),
-            basePrice: parseFloat(priceInput.value),
+            name: document.getElementById('product-name').value || "Producto",
+            basePrice: parseFloat(document.getElementById('product-price').value) || 0,
             unit: document.getElementById('product-unit').value,
-            description: document.getElementById('product-description').value.trim(),
-            available: true,
-            minQty: 0.5,
-            icon: "fa-box"
+            description: document.getElementById('product-description').value || "",
+            minQty: 0.5
         };
         
         if (await window.guardarProducto(producto)) {
-            nameInput.value = '';
-            priceInput.value = '';
+            document.getElementById('product-name').value = '';
+            document.getElementById('product-price').value = '';
             document.getElementById('product-description').value = '';
-            actualizarListaProductos();
-            alert("✅ Producto guardado exitosamente");
+            alert('✅ Producto guardado');
         }
     };
-    
-    function actualizarListaProductos() {
-        const container = document.getElementById('productos-lista');
-        if (!container) return;
-        
-        if (!window.storeData.products || window.storeData.products.length === 0) {
-            container.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">📭 No hay productos disponibles</p>';
-            return;
-        }
-        
-        let html = '';
-        window.storeData.products.forEach(prod => {
-            html += `
-                <div style="
-                    border-bottom: 1px solid #eee;
-                    padding: 15px 0;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                ">
-                    <div style="flex: 1;">
-                        <strong style="font-size: 16px; color: #333;">${prod.name}</strong>
-                        <div style="color: #27ae60; font-weight: bold; margin-top: 5px;">
-                            $${prod.basePrice?.toFixed(2) || '0.00'} / ${prod.unit || 'lb'}
-                        </div>
-                        ${prod.description ? `<p style="color: #666; font-size: 13px; margin-top: 5px;">${prod.description.substring(0, 50)}${prod.description.length > 50 ? '...' : ''}</p>` : ''}
-                    </div>
-                    <button onclick="eliminarProducto('${prod.id}')" style="
-                        background: #e74c3c;
-                        color: white;
-                        border: none;
-                        padding: 8px 15px;
-                        border-radius: 5px;
-                        cursor: pointer;
-                        font-size: 13px;
-                        margin-left: 10px;
-                        transition: background 0.3s;
-                    " onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">
-                        🗑️ Eliminar
-                    </button>
-                </div>
-            `;
-        });
-        
-        container.innerHTML = html;
-    }
-    
-    console.log("✅ Panel admin creado exitosamente");
 }, 1000);
 
-// ===== OCULTAR CONTRASEÑA VISIBLE EN LA PÁGINA =====
+// ===== MOVER WHATSAPP A LA IZQUIERDA =====
+setTimeout(() => {
+    const botonesWhatsApp = document.querySelectorAll('[class*="whats"], [id*="whats"], a[href*="wa.me"], a[href*="whatsapp"]');
+    
+    botonesWhatsApp.forEach(btn => {
+        btn.style.right = 'auto';
+        btn.style.left = '20px';
+        btn.style.bottom = '20px';
+        btn.style.zIndex = '999996';
+        
+        if (btn.style.position === 'fixed' || window.getComputedStyle(btn).position === 'fixed') {
+            btn.style.left = '20px';
+            btn.style.right = 'auto';
+        }
+    });
+    
+    // Buscar por texto también
+    document.querySelectorAll('a, button, div').forEach(el => {
+        if (el.textContent && el.textContent.toLowerCase().includes('whatsapp')) {
+            el.style.right = 'auto';
+            el.style.left = '20px';
+        }
+    });
+}, 2000);
+
+// ===== OCULTAR CONTRASEÑA =====
 setTimeout(() => {
     document.querySelectorAll('*').forEach(el => {
         if (el.innerHTML) {
@@ -518,10 +599,9 @@ setTimeout(() => {
 }, 500);
 
 // ===== INICIALIZAR =====
-console.log("🚀 Inicializando Berkot Firebase...");
+console.log("🚀 Inicializando Berkot Firebase con Carrito y Cantidades...");
 console.log("✅ Berkot Firebase inicializado correctamente");
-console.log("🔥 Sistema Berkot Firebase listo y funcionando!");
-console.log("✅ Credenciales configuradas correctamente");
+console.log("🔥 Sistema listo - Productos con selector de cantidad");
 console.log("📍 Base de datos:", firebaseConfig.databaseURL);
 
 // ===== EXPORTAR FUNCIONES =====
@@ -532,5 +612,6 @@ window.BERKOT_FIREBASE = {
     eliminarProducto: window.eliminarProducto,
     loginAdmin: window.loginAdmin,
     logoutAdmin: window.logoutAdmin,
-    mostrarProductos: mostrarProductosEnPagina
+    mostrarProductos: mostrarProductosEnPagina,
+    verCarrito: window.verCarrito
 };
