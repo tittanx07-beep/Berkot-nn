@@ -1,5 +1,5 @@
-// ========== BERKOT FIREBASE - VERSIÓN CORREGIDA ==========
-// ========== SOLO WHATSAPP Y BOTÓN GUARDAR ARREGLADOS ==========
+// ========== BERKOT FIREBASE - VERSIÓN DEFINITIVA ==========
+// ========== SOLUCIÓN 3 - WHATSAPP ENVÍA PEDIDO COMPLETO ==========
 
 console.log("🔥 BERKOT - INICIANDO SISTEMA DEFINITIVO");
 
@@ -428,7 +428,7 @@ function crearBotonAdmin() {
     console.log("✅ Botón Admin creado en IZQUIERDA");
 }
 
-// ===== 12. WHATSAPP CORREGIDO - 100% FUNCIONAL =====
+// ===== 12. WHATSAPP =====
 function crearBotonWhatsApp() {
     // Eliminar cualquier WhatsApp existente
     document.querySelectorAll('.whatsapp-btn-fijo, a[href*="wa.me"], a[href*="whatsapp"]').forEach(el => el.remove());
@@ -442,7 +442,6 @@ function crearBotonWhatsApp() {
     waBtn.innerHTML = '📱';
     waBtn.title = 'Contactar por WhatsApp';
     
-    // ESTILOS DIRECTOS - POSICIÓN CORRECTA
     waBtn.style.cssText = `
         position: fixed !important;
         left: 20px !important;
@@ -462,7 +461,6 @@ function crearBotonWhatsApp() {
         transition: all 0.3s ease !important;
     `;
     
-    // HOVER EFECTO
     waBtn.onmouseover = function() {
         this.style.transform = 'scale(1.1)';
         this.style.boxShadow = '0 8px 25px rgba(37,211,102,0.6)';
@@ -476,86 +474,19 @@ function crearBotonWhatsApp() {
     console.log('✅✅ WHATSAPP CREADO: izquierda 100px - Número: 5356603249');
 }
 
-// ===== 13. BOTÓN GUARDAR/ENVIAR WHATSAPP CORREGIDO =====
-window.enviarPedidoWhatsApp = function() {
-    console.log("📤 Enviando pedido por WhatsApp...");
-    
-    const nombre = document.getElementById('cliente-nombre');
-    const telefono = document.getElementById('cliente-telefono');
-    const direccion = document.getElementById('cliente-direccion');
-    const notas = document.getElementById('cliente-notas');
-    
-    if (!nombre || !telefono || !direccion) {
-        mostrarNotificacion('❌ Error con el formulario', 'error');
-        return;
-    }
-    
-    const nombreVal = nombre.value.trim();
-    const telefonoVal = telefono.value.trim();
-    const direccionVal = direccion.value.trim();
-    const notasVal = notas ? notas.value.trim() : '';
-    
-    if (!nombreVal || !telefonoVal || !direccionVal) {
-        mostrarNotificacion('❌ Completa todos los campos obligatorios', 'error');
-        return;
-    }
-    
-    const carrito = JSON.parse(localStorage.getItem('berkot_carrito')) || [];
-    
-    if (carrito.length === 0) {
-        mostrarNotificacion('❌ Carrito vacío', 'error');
-        return;
-    }
-    
-    let totalGeneral = 0;
-    let mensaje = "🛍️ *NUEVO PEDIDO - BERKOT*\n\n";
-    mensaje += "👤 *Cliente:* " + nombreVal + "\n";
-    mensaje += "📞 *Teléfono:* " + telefonoVal + "\n";
-    mensaje += "📍 *Dirección:* " + direccionVal + "\n\n";
-    mensaje += "*🛒 PRODUCTOS:*\n";
-    
-    carrito.forEach(item => {
-        const cant = item.cantidad || 0;
-        const precio = item.precio || 0;
-        const total = item.total || 0;
-        mensaje += `• ${item.nombre}: ${cant.toFixed(item.unidad === 'unidad' ? 0 : 1)} ${item.unidad} x $${precio.toFixed(2)} = $${total.toFixed(2)}\n`;
-        totalGeneral += total;
-    });
-    
-    mensaje += `\n💰 *TOTAL: $${totalGeneral.toFixed(2)}*`;
-    
-    if (notasVal) {
-        mensaje += `\n\n📝 *Notas:* ${notasVal}`;
-    }
-    
-    const url = `https://wa.me/5356603249?text=${encodeURIComponent(mensaje)}`;
-    window.open(url, '_blank');
-    
-    mostrarNotificacion('✅ Pedido enviado por WhatsApp', 'success');
-    
-    const modal = document.getElementById('modal-pedido');
-    if (modal) modal.remove();
-    
-    setTimeout(() => {
-        if (confirm("✅ Pedido enviado. ¿Vaciar carrito?")) {
-            localStorage.removeItem('berkot_carrito');
-            carrito.length = 0;
-            actualizarContadorCarrito();
-            mostrarNotificacion('✅ Carrito vaciado', 'success');
-        }
-    }, 500);
-};
-
-// ===== 14. LOGIN =====
+// ===== 13. LOGIN =====
 window.mostrarLogin = async function() {
     const email = prompt("📧 Email:");
     if (!email) return;
     const password = prompt("🔑 Contraseña:");
     if (!password) return;
     
+    const emailLimpio = email.replace(/\s+/g, '').trim();
+    const passwordLimpia = password.replace(/\s+/g, '').trim();
+    
     try {
-        await signInWithEmailAndPassword(auth, email, password);
-        usuarioActual = email;
+        await signInWithEmailAndPassword(auth, emailLimpio, passwordLimpia);
+        usuarioActual = emailLimpio;
         mostrarNotificacion('✅ Sesión iniciada', 'success');
         
         const btnAdmin = document.getElementById('btn-admin');
@@ -570,7 +501,7 @@ window.mostrarLogin = async function() {
     }
 };
 
-// ===== 15. LOGOUT =====
+// ===== 14. LOGOUT =====
 window.logout = async function() {
     await signOut(auth);
     usuarioActual = null;
@@ -585,7 +516,7 @@ window.logout = async function() {
     mostrarProductos();
 };
 
-// ===== 16. PANEL ADMIN =====
+// ===== 15. PANEL ADMIN =====
 window.mostrarPanelAdmin = function() {
     const action = prompt(
         "👤 PANEL ADMIN\n\n1. ➕ Agregar producto\n2. 🔒 Cerrar sesión\n\nSelecciona 1 o 2:"
@@ -598,7 +529,7 @@ window.mostrarPanelAdmin = function() {
     }
 };
 
-// ===== 17. AGREGAR PRODUCTO =====
+// ===== 16. AGREGAR PRODUCTO =====
 window.agregarProducto = async function() {
     const nombre = prompt("📦 Nombre del producto:");
     if (!nombre) return;
@@ -628,7 +559,7 @@ window.agregarProducto = async function() {
     }
 };
 
-// ===== 18. EDITAR PRODUCTO =====
+// ===== 17. EDITAR PRODUCTO =====
 window.editarProducto = async function(id) {
     if (!usuarioActual) {
         mostrarNotificacion('❌ Debes iniciar sesión', 'error');
@@ -674,7 +605,7 @@ window.editarProducto = async function(id) {
     }
 };
 
-// ===== 19. ELIMINAR PRODUCTO =====
+// ===== 18. ELIMINAR PRODUCTO =====
 window.eliminarProducto = async function(id) {
     if (!usuarioActual) {
         mostrarNotificacion('❌ Debes iniciar sesión', 'error');
@@ -687,7 +618,104 @@ window.eliminarProducto = async function(id) {
     }
 };
 
-// ===== 20. ESTILOS GLOBALES =====
+// ===== 🔴🔴🔴 SOLUCIÓN 3 - WHATSAPP ENVÍA PEDIDO COMPLETO 🔴🔴🔴 =====
+window.enviarPedidoWhatsApp = function() {
+    console.log("📤 Enviando pedido por WhatsApp...");
+    
+    // 1. VERIFICAR CARRITO
+    const carrito = JSON.parse(localStorage.getItem('berkot_carrito')) || [];
+    
+    if (carrito.length === 0) {
+        mostrarNotificacion('❌ Carrito vacío. Agrega productos primero.', 'error');
+        return;
+    }
+    
+    // 2. VERIFICAR DATOS DEL CLIENTE
+    const nombre = document.getElementById('cliente-nombre')?.value;
+    const telefono = document.getElementById('cliente-telefono')?.value;
+    const direccion = document.getElementById('cliente-direccion')?.value;
+    const notas = document.getElementById('cliente-notas')?.value || '';
+    
+    if (!nombre || !telefono || !direccion) {
+        mostrarNotificacion('❌ Completa tus datos en el formulario', 'error');
+        const formulario = document.querySelector('.customer-form');
+        if (formulario) formulario.scrollIntoView({ behavior: 'smooth' });
+        return;
+    }
+    
+    // 3. CALCULAR TOTAL Y CONSTRUIR MENSAJE
+    let totalGeneral = 0;
+    let mensaje = "🛍️ *NUEVO PEDIDO - BERKOT*\n\n";
+    mensaje += "👤 *Cliente:* " + nombre.trim() + "\n";
+    mensaje += "📞 *Teléfono:* " + telefono.trim() + "\n";
+    mensaje += "📍 *Dirección:* " + direccion.trim() + "\n\n";
+    mensaje += "*🛒 PRODUCTOS:*\n";
+    
+    carrito.forEach((item, index) => {
+        const cant = item.cantidad || 0;
+        const precio = item.precio || 0;
+        const total = item.total || (precio * cant);
+        
+        let cantidadFormateada = cant.toFixed(1);
+        if (item.unidad === 'unidad') {
+            cantidadFormateada = Math.round(cant).toString();
+        }
+        
+        mensaje += `${index + 1}. ${item.nombre}: ${cantidadFormateada} ${item.unidad} x $${precio.toFixed(2)} = *$${total.toFixed(2)}*\n`;
+        totalGeneral += total;
+    });
+    
+    mensaje += `\n💰 *TOTAL DEL PEDIDO: $${totalGeneral.toFixed(2)}*`;
+    
+    if (notas.trim()) {
+        mensaje += `\n\n📝 *Notas:* ${notas.trim()}`;
+    }
+    
+    const ahora = new Date();
+    const fechaFormateada = ahora.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+    const horaFormateada = ahora.toLocaleTimeString('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    mensaje += `\n\n⏰ *Fecha y hora:* ${fechaFormateada} - ${horaFormateada}`;
+    mensaje += `\n\n✅ Por favor, confirme la disponibilidad de los productos.`;
+    
+    // 4. ENVIAR POR WHATSAPP
+    const numeroNegocio = "5356603249";
+    const url = `https://wa.me/${numeroNegocio}?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, '_blank');
+    
+    // 5. NOTIFICACIÓN DE ÉXITO
+    mostrarNotificacion('✅ Pedido enviado por WhatsApp', 'success');
+    
+    // 6. PREGUNTAR SI VACIAR CARRITO
+    setTimeout(() => {
+        if (confirm("✅ Pedido enviado correctamente.\n\n¿Deseas vaciar el carrito?")) {
+            localStorage.removeItem('berkot_carrito');
+            carrito.length = 0;
+            actualizarContadorCarrito();
+            
+            const cartItems = document.getElementById('cart-items');
+            const totalAmount = document.getElementById('total-amount');
+            
+            if (cartItems) {
+                cartItems.innerHTML = '<p id="empty-cart-message">Tu carrito está vacío. Agrega productos para comenzar.</p>';
+            }
+            if (totalAmount) {
+                totalAmount.textContent = '0.00';
+            }
+            
+            mostrarNotificacion('✅ Carrito vaciado', 'success');
+        }
+    }, 1500);
+};
+
+// ===== 19. ESTILOS GLOBALES =====
 function agregarEstilos() {
     const estilos = document.createElement('style');
     estilos.textContent = `
@@ -704,7 +732,7 @@ function agregarEstilos() {
     document.head.appendChild(estilos);
 }
 
-// ===== 21. FIREBASE LISTENER =====
+// ===== 20. FIREBASE LISTENER =====
 const productosRef = ref(db, 'productos');
 onValue(productosRef, (snapshot) => {
     const data = snapshot.val();
@@ -725,14 +753,14 @@ onValue(productosRef, (snapshot) => {
     }
 });
 
-// ===== 22. INICIALIZAR =====
+// ===== 21. INICIALIZAR =====
 function inicializar() {
     console.log("🚀 Inicializando sistema...");
     
     agregarEstilos();
     crearBotonCarrito();
     crearBotonAdmin();
-    crearBotonWhatsApp(); // ✅ WHATSAPP CORREGIDO
+    crearBotonWhatsApp();
     
     console.log("✅✅✅ SISTEMA BERKOT LISTO");
     console.log("📞 Número: +53 5660 3249");
@@ -749,4 +777,4 @@ window.editarProducto = editarProducto;
 window.eliminarProducto = eliminarProducto;
 window.agregarProducto = agregarProducto;
 window.logout = logout;
-window.enviarPedidoWhatsApp = enviarPedidoWhatsApp; // ✅ EXPORTADO
+window.enviarPedidoWhatsApp = enviarPedidoWhatsApp;
